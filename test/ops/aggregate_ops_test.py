@@ -48,9 +48,7 @@ class AddNTest(test_util.TensorFlowTestCase):
     data = np.random.randn(*shape).astype(dtype.as_numpy_dtype)
     # For complex types, add an index-dependent imaginary component so we can
     # tell we got the right value.
-    if dtype.is_complex:
-      return data + 10j * data
-    return data
+    return data + 10j * data if dtype.is_complex else data
 
   def testAddN(self):
     np.random.seed(12345)

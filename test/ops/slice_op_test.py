@@ -137,10 +137,7 @@ class SliceTest(test.TestCase):
         scalar_val = self.evaluate(scalar_t)
         self.assertAllEqual(scalar_val, inp[hi])
 
-        if hi > 0:
-          lo = np.random.randint(0, hi)
-        else:
-          lo = 0
+        lo = np.random.randint(0, hi) if hi > 0 else 0
         slice_t = a[lo:hi]
         slice_val = self.evaluate(slice_t)
         self.assertAllEqual(slice_val, inp[lo:hi])
@@ -268,10 +265,7 @@ class SliceTest(test.TestCase):
 
     x = np.random.randint(0, 9)
     z = np.random.randint(0, 9)
-    if z > 0:
-      y = np.random.randint(0, z)
-    else:
-      y = 0
+    y = np.random.randint(0, z) if z > 0 else 0
     slice_t = a[:, x, y:z, :]
     self.assertAllEqual(slice_t, inp[:, x, y:z, :])
 
@@ -335,9 +329,10 @@ class SliceTest(test.TestCase):
     # Create a zero tensor of the input shape ane place
     # the grads into the right location to compare against TensorFlow.
     np_ans = np.zeros(input_shape)
-    slices = []
-    for i in range(len(input_shape)):
-      slices.append(slice(slice_begin[i], slice_begin[i] + slice_size[i]))
+    slices = [
+        slice(slice_begin[i], slice_begin[i] + slice_size[i])
+        for i in range(len(input_shape))
+    ]
     np_ans[tuple(slices)] = grads
 
     self.assertAllClose(np_ans, result)
@@ -360,9 +355,10 @@ class SliceTest(test.TestCase):
     # Create a zero tensor of the input shape ane place
     # the grads into the right location to compare against TensorFlow.
     np_ans = np.zeros(input_shape)
-    slices = []
-    for i in range(len(input_shape)):
-      slices.append(slice(slice_begin[i], slice_begin[i] + slice_size[i]))
+    slices = [
+        slice(slice_begin[i], slice_begin[i] + slice_size[i])
+        for i in range(len(input_shape))
+    ]
     np_ans[tuple(slices)] = grads
 
     self.assertAllClose(np_ans, result)
@@ -460,9 +456,8 @@ class SliceTest(test.TestCase):
       # unintended behavior is prevented.
       c = constant_op.constant(5.0)
       with self.assertRaisesRegex(errors_impl.OperatorNotAllowedInGraphError,
-                                  "Iterating over a symbolic `tf.Tensor`"):
-        for _ in c:
-          pass
+                                      "Iterating over a symbolic `tf.Tensor`"):
+        pass
 
   def testComputedShape(self):
     # NOTE(mrry): We cannot currently handle partially-known values,

@@ -354,12 +354,13 @@ class OperatorShapeTest(test_util.TensorFlowTestCase):
 
   def testReshapeWithManyDims(self):
     with self.assertRaisesRegex(errors.InvalidArgumentError,
-                                "too many dimensions"):
+                                  "too many dimensions"):
       self.evaluate(
           array_ops.reshape(
               tensor=[[1]],
-              shape=constant_op.constant([1 for i in range(254)],
-                                         dtype=dtypes.int64)))
+              shape=constant_op.constant([1 for _ in range(254)],
+                                         dtype=dtypes.int64),
+          ))
 
 
 @test_util.with_eager_op_as_function
@@ -713,7 +714,7 @@ class StridedSliceTest(test_util.TensorFlowTestCase):
       raw = [[[[[1, 2], [3, 4], [5, 6]]], [[[7, 8], [9, 10], [11, 12]]]]]
       checker = StridedSliceChecker(self, raw)
 
-      _ = checker[0:]
+      _ = checker[:]
       # implicit ellipsis
       _ = checker[0:, ...]
       # ellipsis alone
@@ -1046,7 +1047,7 @@ class StridedSliceGradTest(test_util.TensorFlowTestCase,
                            parameterized.TestCase):
   """Test that strided slice's custom gradient produces correct gradients."""
 
-  @parameterized.parameters(set((True, context.executing_eagerly())))
+  @parameterized.parameters({True, context.executing_eagerly()})
   @test_util.disable_xla(
       "b/210077724: Auto-clustering with where op isn't supported. Has loose "
       "output shape bounds")
@@ -1077,7 +1078,7 @@ class StridedSliceGradTest(test_util.TensorFlowTestCase,
       # Test tensor type mask
       _ = grad[ops.convert_to_tensor(raw) <= 76]
 
-  @parameterized.parameters(set((True, context.executing_eagerly())))
+  @parameterized.parameters({True, context.executing_eagerly()})
   def testGradientZero(self, use_tape):
     with test_util.device(use_gpu=True):
       var = variables.Variable(8.)
@@ -1085,7 +1086,7 @@ class StridedSliceGradTest(test_util.TensorFlowTestCase,
       grad = GradSliceChecker(self, var, np.array(8), use_tape)
       _ = grad[tuple()]
 
-  @parameterized.parameters(set((True, context.executing_eagerly())))
+  @parameterized.parameters({True, context.executing_eagerly()})
   def testInt64Indices(self, use_tape):
     with test_util.AbstractGradientTape(use_tape=use_tape) as tape:
       a = math_ops.range(3, dtype=dtypes.float32)
@@ -1164,10 +1165,10 @@ class StridedSliceBenchmark(test_lib.Benchmark):
     n = 256
     shape = (n, n, n)
     items = n**3
-    var = variables.Variable(
-        array_ops.reshape(math_ops.linspace(1., float(items), items), shape),
-        dtype=dtypes.float32)
-    return var
+    return variables.Variable(
+        array_ops.reshape(math_ops.linspace(1.0, float(items), items), shape),
+        dtype=dtypes.float32,
+    )
 
   def benchmark_strided_slice_skip(self):
     with session.Session():
@@ -1337,8 +1338,7 @@ class SliceAssignTest(test_util.TensorFlowTestCase, parameterized.TestCase):
     self.assertAllClose([0.0, 3.0], d1)
     self.assertAllClose([2.0], d2)
 
-  @parameterized.named_parameters(
-      ("_%s" % i, *args) for i, args in enumerate([  # pylint:disable=g-complex-comprehension
+  @parameterized.named_parameters((f"_{i}", *args) for i, args in enumerate([  # pylint:disable=g-complex-comprehension
           ([2, 5], [0, 1], [1, 0], [1, 2], [2], 0, 2, 0, 0, 1),
           ([4], [5], [3], [1], [3], 1, 0, 0, 0, 0),
           ([2, 2, 3, 2], [0, 0, 1], [1, 0, 2], [1, 0, 1], [2, 3], 0, 0, 2, 0, 5)
@@ -1633,13 +1633,10 @@ class UnravelIndexTest(test_util.TensorFlowTestCase):
     with self.cached_session():
       for dtype in [dtypes.int32, dtypes.int64]:
         with self.assertRaisesRegex(
-            errors.InvalidArgumentError,
-            r"Input dims product is causing integer overflow"):
+                  errors.InvalidArgumentError,
+                  r"Input dims product is causing integer overflow"):
           indices = constant_op.constant(-0x100000, dtype=dtype)
-          if dtype == dtypes.int32:
-            value = 0x10000000
-          else:
-            value = 0x7FFFFFFFFFFFFFFF
+          value = 0x10000000 if dtype == dtypes.int32 else 0x7FFFFFFFFFFFFFFF
           dims = constant_op.constant([value, value], dtype=dtype)
           self.evaluate(array_ops.unravel_index(indices=indices, dims=dims))
 
@@ -1655,9 +1652,11 @@ class GuaranteeConstOpTest(test_util.TensorFlowTestCase):
     for use_resource in [False, True]:
       with self.subTest(use_resource=use_resource):
         a = variable_scope.get_variable(
-            "var_{}".format(use_resource), [],
+            f"var_{use_resource}",
+            [],
             initializer=init_ops.constant_initializer(10.0),
-            use_resource=use_resource)
+            use_resource=use_resource,
+        )
         guarantee_a = array_ops.guarantee_const(a)
         self.evaluate(a.initializer)
         self.assertEqual(10.0, self.evaluate(guarantee_a))
@@ -2103,26 +2102,25 @@ class BatchGatherNdTest(test_util.TensorFlowTestCase):
 
   def testShapesMatch(self):
     """Tests for various different shape combinations."""
-    shapes = []
-    # params_shape, indices_shape, batch_dims
-    shapes.append(((2, 2, 2), (2, 1), 1),)
-    shapes.append(((2, 2, 2), (2, 2), 1),)
-    shapes.append(((2, 2, 2), (2, 3), 0),)
-    shapes.append(((2, 2, 2), (3,), 0),)
-    shapes.append(((2, 2, 2), (1,), 0),)
-    shapes.append(((2, 2, 3, 2), (2, 3), 1),)
-    shapes.append(((2, 2, 3, 2), (2, 2), 1),)
-    shapes.append(((2, 2, 3, 2), (2, 1), 1),)
-    shapes.append(((2, 2, 3, 2), (2, 1, 3), 1),)
-    shapes.append(((2, 2, 3, 2), (2, 2, 2), 1),)
-    shapes.append(((2, 2, 3, 2), (2, 3, 1), 1),)
-    shapes.append(((3, 2, 2, 3, 4), (3, 2, 3), 2),)
-    shapes.append(((3, 2, 2, 3, 4), (3, 2, 2), 2),)
-    shapes.append(((3, 2, 2, 3, 4), (3, 2, 1), 2),)
-    shapes.append(((3, 2, 2, 3, 4), (3, 2, 1, 3), 2),)
-    shapes.append(((3, 2, 2, 3, 4), (3, 2, 2, 2), 2),)
-    shapes.append(((3, 2, 2, 3, 4), (3, 2, 3, 1), 2),)
-
+    shapes = [
+        ((2, 2, 2), (2, 1), 1),
+        ((2, 2, 2), (2, 2), 1),
+        ((2, 2, 2), (2, 3), 0),
+        ((2, 2, 2), (3, ), 0),
+        ((2, 2, 2), (1, ), 0),
+        ((2, 2, 3, 2), (2, 3), 1),
+        ((2, 2, 3, 2), (2, 2), 1),
+        ((2, 2, 3, 2), (2, 1), 1),
+        ((2, 2, 3, 2), (2, 1, 3), 1),
+        ((2, 2, 3, 2), (2, 2, 2), 1),
+        ((2, 2, 3, 2), (2, 3, 1), 1),
+        ((3, 2, 2, 3, 4), (3, 2, 3), 2),
+        ((3, 2, 2, 3, 4), (3, 2, 2), 2),
+        ((3, 2, 2, 3, 4), (3, 2, 1), 2),
+        ((3, 2, 2, 3, 4), (3, 2, 1, 3), 2),
+        ((3, 2, 2, 3, 4), (3, 2, 2, 2), 2),
+        ((3, 2, 2, 3, 4), (3, 2, 3, 1), 2),
+    ]
     for params_shape, indices_shape, batch_dims in shapes:
       with self.subTest(
           params_shape=params_shape,
@@ -2143,17 +2141,17 @@ class BatchGatherNdTest(test_util.TensorFlowTestCase):
   def testReducesToGatherNDWhenBatchDimIsZero(self):
     """Confirms setting batch_dims to zero reduces to tf.gather_nd."""
     params = constant_op.constant(np.random.uniform(0.0, 1.0, size=(7, 8, 9)))
-    indices_shapes = []
-    indices_shapes.append((1,))
-    indices_shapes.append((3, 1))
-    indices_shapes.append((3, 3, 1))
-    indices_shapes.append((2,))
-    indices_shapes.append((3, 2))
-    indices_shapes.append((3, 3, 2))
-    indices_shapes.append((3,))
-    indices_shapes.append((3, 3))
-    indices_shapes.append((3, 3, 3))
-
+    indices_shapes = [
+        (1, ),
+        (3, 1),
+        (3, 3, 1),
+        (2, ),
+        (3, 2),
+        (3, 3, 2),
+        (3, ),
+        (3, 3),
+        (3, 3, 3),
+    ]
     for indices_shape in indices_shapes:
       with self.subTest(indices_shape=indices_shape):
         indices = np.random.randint(0, 7, size=indices_shape)
@@ -2164,23 +2162,22 @@ class BatchGatherNdTest(test_util.TensorFlowTestCase):
 
   def testSameResultAsMapFn(self):
     """Compares results with gather_nd called on every element with map_fn."""
-    shapes = []
-    # params_shape, indices_shape, batch_dims
-    shapes.append(((2, 2, 2), (2, 1), 1),)
-    shapes.append(((2, 2, 2), (2, 2), 1),)
-    shapes.append(((2, 2, 3, 2), (2, 3), 1),)
-    shapes.append(((2, 2, 3, 2), (2, 2), 1),)
-    shapes.append(((2, 2, 3, 2), (2, 1), 1),)
-    shapes.append(((2, 2, 3, 2), (2, 1, 3), 1),)
-    shapes.append(((2, 2, 3, 2), (2, 2, 2), 1),)
-    shapes.append(((2, 2, 3, 2), (2, 3, 1), 1),)
-    shapes.append(((3, 2, 2, 3, 4), (3, 2, 3), 2),)
-    shapes.append(((3, 2, 2, 3, 4), (3, 2, 2), 2),)
-    shapes.append(((3, 2, 2, 3, 4), (3, 2, 1), 2),)
-    shapes.append(((3, 2, 2, 3, 4), (3, 2, 1, 3), 2),)
-    shapes.append(((3, 2, 2, 3, 4), (3, 2, 2, 2), 2),)
-    shapes.append(((3, 2, 2, 3, 4), (3, 2, 3, 1), 2),)
-
+    shapes = [
+        ((2, 2, 2), (2, 1), 1),
+        ((2, 2, 2), (2, 2), 1),
+        ((2, 2, 3, 2), (2, 3), 1),
+        ((2, 2, 3, 2), (2, 2), 1),
+        ((2, 2, 3, 2), (2, 1), 1),
+        ((2, 2, 3, 2), (2, 1, 3), 1),
+        ((2, 2, 3, 2), (2, 2, 2), 1),
+        ((2, 2, 3, 2), (2, 3, 1), 1),
+        ((3, 2, 2, 3, 4), (3, 2, 3), 2),
+        ((3, 2, 2, 3, 4), (3, 2, 2), 2),
+        ((3, 2, 2, 3, 4), (3, 2, 1), 2),
+        ((3, 2, 2, 3, 4), (3, 2, 1, 3), 2),
+        ((3, 2, 2, 3, 4), (3, 2, 2, 2), 2),
+        ((3, 2, 2, 3, 4), (3, 2, 3, 1), 2),
+    ]
     for params_shape, indices_shape, batch_dims in shapes:
       with self.subTest(
           params_shape=params_shape,
@@ -2214,12 +2211,11 @@ class BatchGatherNdTest(test_util.TensorFlowTestCase):
 
   def testBatchDimsAsTensor(self):
     """Tests Tensor batch_dims as input works as intended."""
-    shapes = []
-    # params_shape, indices_shape, batch_dims
-    shapes.append(((3, 2, 2, 3, 4), (3, 2, 3, 1), 0),)
-    shapes.append(((3, 2, 2, 3, 4), (3, 2, 3, 1), 1),)
-    shapes.append(((3, 2, 2, 3, 4), (3, 2, 3, 1), 2),)
-
+    shapes = [
+        ((3, 2, 2, 3, 4), (3, 2, 3, 1), 0),
+        ((3, 2, 2, 3, 4), (3, 2, 3, 1), 1),
+        ((3, 2, 2, 3, 4), (3, 2, 3, 1), 2),
+    ]
     for params_shape, indices_shape, batch_dims in shapes:
       with self.subTest(
           params_shape=params_shape,
@@ -2348,10 +2344,10 @@ class RepeatBenchmark(test_lib.Benchmark):
     items = 1
     for dim in shape:
       items *= dim
-    var = variables.Variable(
-        array_ops.reshape(math_ops.linspace(1., float(items), items), shape),
-        dtype=dtype)
-    return var
+    return variables.Variable(
+        array_ops.reshape(math_ops.linspace(1.0, float(items), items), shape),
+        dtype=dtype,
+    )
 
   def run_benchmark(self, shape, max_repeats, axis=None):
     with session.Session():

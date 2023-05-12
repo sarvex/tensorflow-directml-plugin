@@ -275,11 +275,6 @@ class PoolingTest(test.TestCase):
         # TFDML 37915658
         return
 
-        ksize = test_util.NHWCToNCHW(ksize)
-        strides = test_util.NHWCToNCHW(strides)
-        t = test_util.NHWCToNCHW(t)
-        output_sizes = test_util.NHWCToNCHW(output_sizes)
-
       t = pool_func(
           t,
           ksize=ksize,
@@ -304,9 +299,9 @@ class PoolingTest(test.TestCase):
           x_init_value=x_init_value,
           delta=1e-2)
 
-    print("%s gradient error = " % func_name, err_g)
+    print(f"{func_name} gradient error = ", err_g)
     self.assertLess(err_g, err_g_margin)
-    print("%s second-order gradient error = " % func_name, err_gg)
+    print(f"{func_name} second-order gradient error = ", err_gg)
     self.assertLess(err_gg, err_gg_margin)
 
   def _ConstructAndTestGradient(self,

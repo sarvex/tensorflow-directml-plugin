@@ -115,13 +115,10 @@ class ConcatOpTest(test.TestCase):
     # Random dim to concat on
     concat_dim = np.random.randint(5)
     params = {}
-    if dtype == dtypes.bfloat16:
-      dtype_feed = dtypes.float32
-    else:
-      dtype_feed = dtype
+    dtype_feed = dtypes.float32 if dtype == dtypes.bfloat16 else dtype
     with self.session():
       p = []
-      for i in np.arange(num_tensors):
+      for _ in np.arange(num_tensors):
         input_shape = shape
         input_shape[concat_dim] = np.random.randint(1, 5)
         placeholder = array_ops.placeholder(dtype_feed, shape=input_shape)
@@ -190,9 +187,7 @@ class ConcatOpTest(test.TestCase):
 
   def testScalars(self):
     arr = ops.convert_to_tensor([0.2, 0.3])
-    outs = []
-    for i in range(arr.shape[0]):
-      outs.append(arr[i]**2)
+    outs = [arr[i]**2 for i in range(arr.shape[0])]
     with self.assertRaises((ValueError, errors_impl.InvalidArgumentError)):
       _ = array_ops.concat(outs, axis=0)
 
@@ -536,11 +531,8 @@ class ConcatOpTest(test.TestCase):
         params = {}
         p = []
         shape = np.array([7, 13])
-        if test_util.is_gpu_available():
-          num_tensors = 5000
-        else:
-          num_tensors = 500
-        for i in np.arange(num_tensors):
+        num_tensors = 5000 if test_util.is_gpu_available() else 500
+        for _ in np.arange(num_tensors):
           input_shape = shape
           placeholder = array_ops.placeholder(dtypes.float32, shape=input_shape)
           p.append(placeholder)

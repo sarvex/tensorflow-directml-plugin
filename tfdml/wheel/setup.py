@@ -13,6 +13,7 @@ Check out the GitHub repository to build from source.
 TensorFlow, the TensorFlow logo, and any related marks are trademarks of Google Inc.
 """
 
+
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
@@ -57,15 +58,10 @@ with open("TFDML_WHEEL_NAME", "r", encoding="utf-8") as f:
 if sys.version_info.major == 3:
     REQUIRED_PACKAGES.append("wheel >= 0.26")
 else:
-    REQUIRED_PACKAGES.append("wheel")
-    # mock comes with unittest.mock for python3, need to install for python2
-    REQUIRED_PACKAGES.append("mock >= 2.0.0")
-
+    REQUIRED_PACKAGES.extend(("wheel", "mock >= 2.0.0"))
 # weakref.finalize and enum were introduced in Python 3.4
 if sys.version_info < (3, 4):
-    REQUIRED_PACKAGES.append("backports.weakref >= 1.0rc1")
-    REQUIRED_PACKAGES.append("enum34 >= 1.1.6")
-
+    REQUIRED_PACKAGES.extend(("backports.weakref >= 1.0rc1", "enum34 >= 1.1.6"))
 # pylint: disable=line-too-long
 CONSOLE_SCRIPTS = [
     #    'freeze_graph = tensorflow.python.tools.freeze_graph:run_main',

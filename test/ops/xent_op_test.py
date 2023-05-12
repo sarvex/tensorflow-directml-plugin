@@ -86,7 +86,7 @@ class XentBenchmark(test.Benchmark):
       if k == 0:
         continue
       name = "zero_dimension_m_%d_n_%d_k_%g_use_gpu_%s" % (m, n, k, use_gpu)
-      device = "/%s:0" % ("gpu" if use_gpu else "cpu")
+      device = f'/{"gpu" if use_gpu else "cpu"}:0'
       with ops.Graph().as_default():
         with ops.device(device):
           labels = array_ops.zeros([0, 2, 4], dtype=dtypes.float32)
@@ -111,7 +111,7 @@ class XentBenchmark(test.Benchmark):
       if k == 0:
         continue
       name = "single_class_m_%d_n_%d_k_%g_use_gpu_%s" % (m, n, k, use_gpu)
-      device = "/%s:0" % ("gpu" if use_gpu else "cpu")
+      device = f'/{"gpu" if use_gpu else "cpu"}:0'
       with ops.Graph().as_default():
         with ops.device(device):
           labels = constant_op.constant([[1.], [-1.], [0.]],

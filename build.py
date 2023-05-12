@@ -72,13 +72,10 @@ def _configure_required(args):
     ):
         return True  # Telemetry Provider Group GUID has changed.
 
-    if (
+    return (
         f"TFDML_WHEEL_VERSION_SUFFIX:STRING={args.wheel_version_suffix}"
         not in cmake_cache_content
-    ):
-        return True  # Package wheel version suffix has changed.
-
-    return False
+    )
 
 
 def configure(args, source_dir):
@@ -90,18 +87,17 @@ def configure(args, source_dir):
     command_line = []
     set_tool_environment(args, command_line)
     command_line.append(args.cmake)
-    command_line.append(f"-S {source_dir}")
-    command_line.append(f"-B {args.build_output}")
-    command_line.append(f'-G "{args.generator}"')
-
-    # Print details when fetching dependencies
-    command_line.append("-DFETCHCONTENT_QUIET=OFF")
-
-    command_line.append(f"-DTFDML_TELEMETRY={'ON' if args.telemetry else 'OFF'}")
-    command_line.append(
-        f"-DTFDML_TELEMETRY_PROVIDER_GROUP_GUID={args.telemetry_provider_group_guid}"
+    command_line.extend(
+        (
+            f"-S {source_dir}",
+            f"-B {args.build_output}",
+            f'-G "{args.generator}"',
+            "-DFETCHCONTENT_QUIET=OFF",
+            f"-DTFDML_TELEMETRY={'ON' if args.telemetry else 'OFF'}",
+            f"-DTFDML_TELEMETRY_PROVIDER_GROUP_GUID={args.telemetry_provider_group_guid}",
+            f'-DTFDML_WHEEL_VERSION_SUFFIX="{args.wheel_version_suffix}"',
+        )
     )
-    command_line.append(f'-DTFDML_WHEEL_VERSION_SUFFIX="{args.wheel_version_suffix}"')
     _run_or_show("Configure", " ".join(command_line), args.show)
 
 
@@ -110,10 +106,10 @@ def build(args):
 
     command_line = []
     set_tool_environment(args, command_line)
-    command_line.append(args.cmake)
-    command_line.append(f"--build {args.build_output}")
-    command_line.append(f"--config {args.config.title()}")
-    command_line.append(f"--target {args.target}")
+    command_line.extend((args.cmake, f"--build {args.build_output}"))
+    command_line.extend(
+        (f"--config {args.config.title()}", f"--target {args.target}")
+    )
     if args.clean:
         command_line.append("--clean-first")
 
@@ -121,10 +117,8 @@ def build(args):
         # By default, Ninja builds in parallel.
         if args.generator.startswith("Ninja"):
             command_line.append("-j 1")
-    else:
-        # By default, MSBuild doesn't build in parallel.
-        if args.generator.startswith("Visual Studio"):
-            command_line.append("-- /m")
+    elif args.generator.startswith("Visual Studio"):
+        command_line.append("-- /m")
 
     _run_or_show("Build", " ".join(command_line), args.show)
 

@@ -85,7 +85,7 @@ class CastOpTest(test.TestCase):
 
   def _testAll(self, x):
     self._testTypes(x, use_gpu=False)
-    if x.dtype == np.float32 or x.dtype == np.float64:
+    if x.dtype in [np.float32, np.float64]:
       self._testTypes(x, use_gpu=True)
 
   def testBasic(self):

@@ -137,9 +137,7 @@ def GetShrunkInceptionShapes(shrink=10):
       SAME, SAME, SAME, SAME, SAME, VALID, VALID, SAME, SAME, SAME, SAME, SAME,
       SAME, SAME, SAME, SAME, VALID, VALID, VALID
   ]
-  for i, f, o, s, p in zip(input_sizes, filter_sizes, out_sizes, strides,
-                           paddings):
-    yield i, f, o, s, p
+  yield from zip(input_sizes, filter_sizes, out_sizes, strides, paddings)
 
 
 def GetTestConfigs():
@@ -910,9 +908,8 @@ class Conv2DTest(test.TestCase):
     x2 = self._CreateNumpyTensor(output_sizes)
     dilations = list(dilations)
     with test_util.device(use_gpu):
-      if len(input_sizes) == 4:
-        if data_format == "NCHW":
-          input_sizes = test_util.NHWCToNCHW(input_sizes)
+      if len(input_sizes) == 4 and data_format == "NCHW":
+        input_sizes = test_util.NHWCToNCHW(input_sizes)
       t0 = constant_op.constant(input_sizes, shape=[len(input_sizes)])
       t1 = constant_op.constant(x1, shape=filter_sizes)
       t2 = constant_op.constant(x2, shape=output_sizes)
@@ -3379,23 +3376,38 @@ class FusedConv2DTest(test.TestCase):
 if __name__ == "__main__":
   for index, (input_size_, filter_size_, output_size_, stride_,
               padding_) in enumerate(GetShrunkInceptionShapes()):
-    setattr(Conv2DTest, "testInceptionFwd_" + str(index),
-            test_util.run_in_graph_and_eager_modes(
-                GetInceptionFwdTest(input_size_, filter_size_, stride_,
-                                    padding_)))
     setattr(
-        Conv2DTest, "testInceptionFwdDilatedConv_" + str(index),
-        test_util.run_in_graph_and_eager_modes(GetInceptionFwdDilatedConvTest(
-            input_size_, filter_size_, stride_, padding_)))
-    setattr(Conv2DTest, "testInceptionBackInput_" + str(index),
-            test_util.run_in_graph_and_eager_modes(
-                GetInceptionBackInputTest(input_size_, filter_size_,
-                                          output_size_, stride_, padding_)))
-    setattr(Conv2DTest, "testInceptionBackFilter_" + str(index),
-            test_util.run_in_graph_and_eager_modes(
-                GetInceptionBackFilterTest(input_size_, filter_size_,
-                                           output_size_, [stride_, stride_],
-                                           padding_)))
+        Conv2DTest,
+        f"testInceptionFwd_{str(index)}",
+        test_util.run_in_graph_and_eager_modes(
+            GetInceptionFwdTest(input_size_, filter_size_, stride_, padding_)),
+    )
+    setattr(
+        Conv2DTest,
+        f"testInceptionFwdDilatedConv_{str(index)}",
+        test_util.run_in_graph_and_eager_modes(
+            GetInceptionFwdDilatedConvTest(input_size_, filter_size_, stride_,
+                                           padding_)),
+    )
+    setattr(
+        Conv2DTest,
+        f"testInceptionBackInput_{str(index)}",
+        test_util.run_in_graph_and_eager_modes(
+            GetInceptionBackInputTest(input_size_, filter_size_, output_size_,
+                                      stride_, padding_)),
+    )
+    setattr(
+        Conv2DTest,
+        f"testInceptionBackFilter_{str(index)}",
+        test_util.run_in_graph_and_eager_modes(
+            GetInceptionBackFilterTest(
+                input_size_,
+                filter_size_,
+                output_size_,
+                [stride_, stride_],
+                padding_,
+            )),
+    )
 
   ishape = [1, 400, 400, 1]
   fshape = [1, 1, 1, 256]

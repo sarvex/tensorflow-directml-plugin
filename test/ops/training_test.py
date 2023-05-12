@@ -924,6 +924,9 @@ class TrainingTest(test_combinations.TestCase):
 
         elif input_type == "sequence":
 
+
+
+
             class XYSequence(data_utils.Sequence):
                 def __init__(self, use_namedtuple):
                     self._use_namedtuple = use_namedtuple
@@ -931,12 +934,13 @@ class TrainingTest(test_combinations.TestCase):
 
                 def __getitem__(self, idx):
                     x, y = np.ones((4, 1)), np.ones((4, 1))
-                    if self._use_namedtuple:
-                        return xy_namedtuple(x, y)
-                    return x, y
+                    return xy_namedtuple(x, y) if self._use_namedtuple else (x, y)
 
                 def __len__(self):
                     return 4
+
+
+
 
             class XSequence(data_utils.Sequence):
                 def __init__(self, use_namedtuple):
@@ -945,12 +949,11 @@ class TrainingTest(test_combinations.TestCase):
 
                 def __getitem__(self, idx):
                     x = np.ones((4, 1))
-                    if self._use_namedtuple:
-                        return x_namedtuple(x)
-                    return x
+                    return x_namedtuple(x) if self._use_namedtuple else x
 
                 def __len__(self):
                     return 4
+
 
             return XYSequence, XSequence
 
@@ -1052,6 +1055,9 @@ class TrainingTest(test_combinations.TestCase):
 
     @test_combinations.run_all_keras_modes(always_skip_v1=True)
     def test_get_config_override(self):
+
+
+
         class MyModel(training_module.Model):
             def __init__(self, units):
                 super().__init__()
@@ -1062,8 +1068,9 @@ class TrainingTest(test_combinations.TestCase):
 
             def get_config(self):
                 config = {"units": int(self.units)}
-                config.update(super().get_config())
+                config |= super().get_config()
                 return config
+
 
         model = MyModel(units=np.int32(10))
         config = model.get_config()
@@ -1379,12 +1386,11 @@ class TrainingTest(test_combinations.TestCase):
         self.assertEqual(test_callback.epoch_end_call_count, 2)
 
         self.assertSetEqual(
-            set(test_callback.batch_end_logs.keys()),
-            set(["acc", "loss", "mae"]),
+            set(test_callback.batch_end_logs.keys()), {"acc", "loss", "mae"}
         )
         self.assertSetEqual(
             set(test_callback.epoch_end_logs.keys()),
-            set(["acc", "loss", "mae", "val_acc", "val_loss", "val_mae"]),
+            {"acc", "loss", "mae", "val_acc", "val_loss", "val_mae"},
         )
 
     @test_combinations.run_all_keras_modes
@@ -2127,6 +2133,9 @@ class TrainingTest(test_combinations.TestCase):
     def test_evaluate_with_custom_test_step(
         self, use_compiled_metrics, use_custom_metrics
     ):
+
+
+
         class MyModel(training_module.Model):
             def test_step(self, data):
                 x, y = data
@@ -2142,8 +2151,9 @@ class TrainingTest(test_combinations.TestCase):
                         "mean": tf.reduce_mean(pred),
                         "sum": tf.reduce_sum(pred),
                     }
-                    metrics.update(custom_metrics)
+                    metrics |= custom_metrics
                 return metrics
+
 
         inputs = layers_module.Input((2,))
         outputs = layers_module.Dense(3)(inputs)
@@ -3735,9 +3745,9 @@ class TestTrainingWithMetrics(test_combinations.TestCase):
             "loss",
             "dense_loss",
             "dropout_loss",
-            "dense_" + mse_metric,
+            f"dense_{mse_metric}",
             "dense_binary_accuracy",
-            "dropout_" + mse_metric,
+            f"dropout_{mse_metric}",
             "dropout_binary_accuracy",
         ]
 

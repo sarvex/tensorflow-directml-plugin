@@ -232,9 +232,7 @@ class BatchMatMulBenchmark(test.Benchmark):
   def benchmarkBatchMatMulBroadcast(self):
     for (a_shape, b_shape) in self.shape_pairs:
       with compat.forward_compatibility_horizon(2019, 4, 26):
-        with ops.Graph().as_default(), \
-            session.Session(config=benchmark.benchmark_config()) as sess, \
-            ops.device("/cpu:0"):
+        with (ops.Graph().as_default(), session.Session(config=benchmark.benchmark_config()) as sess, ops.device("/cpu:0")):
           matrix_a = variables.Variable(
               GetRandomNormalInput(a_shape, np.float32))
           matrix_b = variables.Variable(
@@ -246,7 +244,8 @@ class BatchMatMulBenchmark(test.Benchmark):
               sess,
               math_ops.matmul(matrix_a, matrix_b),
               min_iters=50,
-              name="batch_matmul_cpu_{}_{}".format(a_shape, b_shape))
+              name=f"batch_matmul_cpu_{a_shape}_{b_shape}",
+          )
 
           # Manually broadcast the input matrices using the broadcast_to op.
           broadcasted_batch_shape = array_ops.broadcast_static_shape(
@@ -259,10 +258,11 @@ class BatchMatMulBenchmark(test.Benchmark):
               sess,
               math_ops.matmul(
                   array_ops.broadcast_to(matrix_a, broadcasted_a_shape),
-                  array_ops.broadcast_to(matrix_b, broadcasted_b_shape)),
+                  array_ops.broadcast_to(matrix_b, broadcasted_b_shape),
+              ),
               min_iters=50,
-              name="batch_matmul_manual_broadcast_cpu_{}_{}".format(
-                  a_shape, b_shape))
+              name=f"batch_matmul_manual_broadcast_cpu_{a_shape}_{b_shape}",
+          )
 
 
 if __name__ == "__main__":
@@ -273,28 +273,35 @@ if __name__ == "__main__":
   for dtype_ in dtypes_to_test:
     for adjoint_a_ in False, True:
       for adjoint_b_ in False, True:
-        name = "%s_%s_%s" % (dtype_.__name__, adjoint_a_, adjoint_b_)
+        name = f"{dtype_.__name__}_{adjoint_a_}_{adjoint_b_}"
         # TF2 does not support placeholders under eager so we skip it.
-        for use_static_shape_ in set([True, tf2.enabled()]):
+        for use_static_shape_ in {True, tf2.enabled()}:
           setattr(
               BatchMatmulOpTest,
-              "testBatchMatmulOp_" + name + "_{}".format(use_static_shape_),
+              f"testBatchMatmulOp_{name}" + f"_{use_static_shape_}",
               _GetBatchMatmulOpTest(dtype_, adjoint_a_, adjoint_b_,
-                                    use_static_shape_))
+                                    use_static_shape_),
+          )
           # Broadcasting is supported only in v2.
           setattr(
-              BatchMatmulOpTest, "testBatchMatmulBroadcasting_" + name +
-              ("_%s" % use_static_shape_),
+              BatchMatmulOpTest,
+              (f"testBatchMatmulBroadcasting_{name}" +
+               f"_{use_static_shape_}"),
               _GetBatchMatmulOpBroadcastingTest(dtype_, adjoint_a_, adjoint_b_,
-                                                use_static_shape_))
+                                                use_static_shape_),
+          )
         if dtype_ == np.int32:
           continue
-        setattr(BatchMatmulGradientTest, "testBatchMatmulGradient_" + name,
-                _GetBatchMatmulGradientTest(dtype_, adjoint_a_, adjoint_b_))
+        setattr(
+            BatchMatmulGradientTest,
+            f"testBatchMatmulGradient_{name}",
+            _GetBatchMatmulGradientTest(dtype_, adjoint_a_, adjoint_b_),
+        )
         # Broadcasting is supported only in v2.
         setattr(
             BatchMatmulGradientTest,
-            "testBatchMatmulGradientWithBroadcasting_" + name,
+            f"testBatchMatmulGradientWithBroadcasting_{name}",
             _GetBatchMatmulGradientWithBroadcastingTest(dtype_, adjoint_a_,
-                                                        adjoint_b_))
+                                                        adjoint_b_),
+        )
   test.main()

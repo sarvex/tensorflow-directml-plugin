@@ -176,18 +176,19 @@ class TruncatedNormalTest(test.TestCase):
   # implementations which uses the same random number seed.
   def testDistinct(self):
     # NOTE: TruncatedNormal on GPU is not supported.
-    if not test_util.is_gpu_available():
-      for dt in dtypes.float16, dtypes.float32, dtypes.float64:
-        sampler = self._Sampler(1000, 0.0, 1.0, dt, use_gpu=False)
-        x = sampler()
-        y = sampler()
-        # Number of different samples.
-        count = (x == y).sum()
-        if count >= 10:
-          print("x = ", x)
-          print("y = ", y)
-          print("count = ", count)
-        self.assertTrue(count < 10)
+    if test_util.is_gpu_available():
+      return
+    for dt in dtypes.float16, dtypes.float32, dtypes.float64:
+      sampler = self._Sampler(1000, 0.0, 1.0, dt, use_gpu=False)
+      x = sampler()
+      y = sampler()
+      # Number of different samples.
+      count = (x == y).sum()
+      if count >= 10:
+        print("x = ", x)
+        print("y = ", y)
+        print("count = ", count)
+      self.assertTrue(count < 10)
 
   # Checks that the CPU and GPU implementation returns the same results,
   # given the same random seed
@@ -220,8 +221,8 @@ class TruncatedNormalTest(test.TestCase):
   # The effective standard deviation of truncated normal is 85% of the
   # requested one.
   def testStdDev(self):
+    stddev = 3.0
     for dt in dtypes.float16, dtypes.float32, dtypes.float64:
-      stddev = 3.0
       sampler = self._Sampler(100000, 0.0, stddev, dt, use_gpu=True)
       x = sampler()
       print("std(x)", np.std(x), abs(np.std(x) / stddev - 0.85))
@@ -291,7 +292,7 @@ class RandomUniformTest(RandomOpTestCommon):
                dtypes.int64):
       sampler = self._Sampler(1000, minv=-2, maxv=8, dtype=dt, use_gpu=True)
       x = sampler()
-      self.assertTrue(-2 <= np.min(x))
+      self.assertTrue(np.min(x) >= -2)
       self.assertTrue(np.max(x) < 8)
 
   # Asserts that different trials (1000 samples per trial) is unlikely

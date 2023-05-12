@@ -104,7 +104,7 @@ class SplitOpTest(test.TestCase):
       array_ops.split(value, size_splits, num=4)
 
     r = self.evaluate(array_ops.split(value, size_splits, num=3))
-    self.assertAllEqual(r[0], value[0:2])
+    self.assertAllEqual(r[0], value[:2])
     self.assertAllEqual(r[1], value[2:4])
     self.assertAllEqual(r[2], value[4:])
 

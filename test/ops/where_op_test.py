@@ -263,7 +263,7 @@ class WhereBenchmark(test.Benchmark):
         [0.01, 0.5, 0.99],
         [False, True]):
       name = "m_%d_n_%d_p_%g_use_gpu_%s" % (m, n, p, use_gpu)
-      device = "/%s:0" % ("gpu" if use_gpu else "cpu")
+      device = f'/{"gpu" if use_gpu else "cpu"}:0'
       with ops.Graph().as_default():
         with ops.device(device):
           x = random_ops.random_uniform((m, n), dtype=dtypes.float32) <= p
@@ -285,7 +285,7 @@ class WhereBenchmark(test.Benchmark):
     for (m, n, use_gpu) in itertools.product([1000, 10000, 100000],
                                              [10, 100, 1000], [False, True]):
       name = "m_%d_n_%d_use_gpu_%s" % (m, n, use_gpu)
-      device = "/%s:0" % ("gpu" if use_gpu else "cpu")
+      device = f'/{"gpu" if use_gpu else "cpu"}:0'
       with ops.Graph().as_default():
         with ops.device(device):
           x_gen = random_ops.random_uniform([m, n], dtype=dtypes.float32)

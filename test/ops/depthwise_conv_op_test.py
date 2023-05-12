@@ -1033,13 +1033,7 @@ class DepthwiseConv2DDeterministicTest(test.TestCase):
                  seed=123):
     random_seed.set_seed(seed)
     batch_size = 2  # no interaction over batch, so make small
-    if use_cudnn:
-      # One input channel, plus a cuDNN-supported filter size and number of
-      # output channels will result in cuDNN being used for both
-      # backprop-to-input and backprop-to-filter on cuDNN 7 and higher.
-      input_channels = 1
-    else:
-      input_channels = 2  # no interaction over channels, so make small
+    input_channels = 1 if use_cudnn else 2
     input_height = 500
     input_width = 1000
     if data_format == "NHWC":

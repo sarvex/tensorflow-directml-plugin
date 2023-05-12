@@ -417,19 +417,19 @@ class SquaredDifferenceTest(test_util.TensorFlowTestCase):
 class ApproximateEqualTest(test_util.TensorFlowTestCase):
 
   def testApproximateEqual(self):
+    z = False
     for dtype in [np.float32, np.double]:
       x = dtype(1)
       y = dtype(1.00009)
-      z = False
       with test_util.device(use_gpu=True):
         # Default tolerance is 0.00001
         z_tf = self.evaluate(math_ops.approximate_equal(x, y))
         self.assertAllEqual(z, z_tf)
 
+    z = True
     for dtype in [np.float32, np.double]:
       x = dtype(1)
       y = dtype(1.000009)
-      z = True
       with test_util.device(use_gpu=True):
         # Default tolerance is 0.00001
         z_tf = self.evaluate(math_ops.approximate_equal(x, y))
@@ -511,9 +511,7 @@ class AddNTest(test_util.TensorFlowTestCase):
 
   def testPartials(self):
     """Test that previously revealed a bug in buffer forwarding for AddN."""
-    partials = []
-    for _ in range(98):
-      partials.append(math_ops.add_n([constant_op.constant(1)]))
+    partials = [math_ops.add_n([constant_op.constant(1)]) for _ in range(98)]
     partials.append(
         math_ops.add_n([constant_op.constant(1),
                         constant_op.constant(1)]))
@@ -1167,10 +1165,7 @@ class EqualityTest(test_util.TensorFlowTestCase, parameterized.TestCase):
     if (tf2.enabled() and isinstance(float_literal, np.float32) or
         not tf2.enabled() and isinstance(float_literal, float)):
       self.skipTest("There is a bug in type promotion.")
-    if is_equals:
-      op = math_ops.tensor_equals
-    else:
-      op = math_ops.tensor_not_equals
+    op = math_ops.tensor_equals if is_equals else math_ops.tensor_not_equals
     x = constant_op.constant(4)
     try:
       result = op(x, float_literal)
@@ -1216,10 +1211,10 @@ class ArgMaxMinTest(test_util.TensorFlowTestCase):
     if dtype.is_integer:
       array = np.random.default_rng().integers(
           low=dtype.min, high=dtype.max, size=shape, endpoint=True)
-      return constant_op.constant(array, dtype=dtype)
     else:
       array = np.random.default_rng().uniform(low=-1.0, high=1.0, size=shape)
-      return constant_op.constant(array, dtype=dtype)
+
+    return constant_op.constant(array, dtype=dtype)
 
   def _getValidDtypes(self):
     return (dtypes.bfloat16, dtypes.float16, dtypes.float32, dtypes.float64,

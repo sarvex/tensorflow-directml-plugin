@@ -32,9 +32,7 @@ from tensorflow.python.training import gradient_descent
 
 
 def _elu_grad_grad(activation):
-  if activation < 0:
-    return np.exp(activation)
-  return 0
+  return np.exp(activation) if activation < 0 else 0
 
 
 class ReluTest(test.TestCase):

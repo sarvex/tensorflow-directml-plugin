@@ -31,7 +31,7 @@ from tensorflow.python.platform import test as test_lib
 def _AddTest(test, op_name, testcase_name, fn):
   test_name = "_".join(["test", op_name, testcase_name])
   if hasattr(test, test_name):
-    raise RuntimeError("Test %s defined more than once" % test_name)
+    raise RuntimeError(f"Test {test_name} defined more than once")
   setattr(test, test_name, fn)
 
 
@@ -145,8 +145,7 @@ if __name__ == "__main__":
       for rows in 1, 2, 7, 23:
         for cols in 1, 2, 7, 23:
           shape = (rows, cols)
-          name = "%s_%s" % (dtype.__name__,
-                            "_".join(map(str, batch_shape + shape)))
+          name = f'{dtype.__name__}_{"_".join(map(str, batch_shape + shape))}'
           _AddTest(MatrixBandPartTest, "MatrixBandPart", name,
                    _GetMatrixBandPartTest(dtype, batch_shape, shape))
 
@@ -155,8 +154,7 @@ if __name__ == "__main__":
       for rows in 1, 2, 7:
         for cols in 1, 2, 7:
           shape = (rows, cols)
-          name = "%s_%s" % (dtype.__name__,
-                            "_".join(map(str, batch_shape + shape)))
+          name = f'{dtype.__name__}_{"_".join(map(str, batch_shape + shape))}'
           _AddTest(MatrixBandPartGradTest, "MatrixBandPartGrad", name,
                    _GetMatrixBandPartGradTest(dtype, batch_shape, shape))
 

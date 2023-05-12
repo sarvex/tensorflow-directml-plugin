@@ -99,8 +99,8 @@ class TransposeTest(test.TestCase):
   def _compare(self, x, use_gpu=False):
     n = np.ndim(x)
     # generate all permutations of [0, 1, ... n-1] in random order.
-    all_perm = np.random.permutation(
-        [p for p in itertools.permutations(range(n))]).astype(np.int32)
+    all_perm = np.random.permutation(list(itertools.permutations(
+        range(n)))).astype(np.int32)
     cs = [False, True] if x.dtype in [np.complex64, np.complex128] else [False]
     for c in cs:
       for p in all_perm[:2]:

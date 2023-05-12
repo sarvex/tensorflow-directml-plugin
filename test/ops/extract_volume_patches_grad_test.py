@@ -78,7 +78,7 @@ class ExtractVolumePatchesGradTest(test.TestCase, parameterized.TestCase):
         print('extract_volume_patches gradient err: %.4e' % err)
         self.assertLess(err, 1e-4)
 
-  @parameterized.parameters(set((True, context.executing_eagerly())))
+  @parameterized.parameters({True, context.executing_eagerly()})
   def testConstructGradientWithLargeVolumes(self, use_tape):
     with test_util.AbstractGradientTape(use_tape=use_tape) as tape:
       batch_size = 4

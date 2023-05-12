@@ -96,7 +96,7 @@ def _gather_test_cases():
   for layer_type, inp_shape, fuzz_dims, arg_dict, filter_fn in _LAYERS_TO_TEST:
     arg_combinations = [[(k, i) for i in v] for k, v in arg_dict.items()]  # pylint: disable=g-complex-comprehension
     for arguments in itertools.product(*arg_combinations):
-      layer_kwargs = {k: v for k, v in arguments}
+      layer_kwargs = dict(arguments)
       if filter_fn is not None and not filter_fn(**layer_kwargs):
         continue
 
@@ -127,14 +127,12 @@ class CoreLayerIntegrationTest(keras_parameterized.TestCase):
 
     for x in [layer_result, model_result]:
       if not isinstance(x, ops.Tensor):
-        raise ValueError('Tensor or EagerTensor expected, got type {}'
-                         .format(type(x)))
+        raise ValueError(f'Tensor or EagerTensor expected, got type {type(x)}')
 
       if isinstance(x, ops.EagerTensor) != context.executing_eagerly():
         expected_type = (ops.EagerTensor if context.executing_eagerly()
                          else ops.Tensor)
-        raise ValueError('Expected type {}, got type {}'
-                         .format(expected_type, type(x)))
+        raise ValueError(f'Expected type {expected_type}, got type {type(x)}')
 
   def _run_fit_eval_predict(self, layer_to_test, input_shape, data_shape,
                             layer_kwargs):
@@ -182,10 +180,10 @@ class CoreLayerIntegrationTest(keras_parameterized.TestCase):
                                input_shape, layer_kwargs)
 
     if any(fuzz_dims):
-      fuzzed_shape = []
-      for dim, should_fuzz in zip(input_shape, fuzz_dims):
-        fuzzed_shape.append(None if should_fuzz else dim)
-
+      fuzzed_shape = [
+          None if should_fuzz else dim
+          for dim, should_fuzz in zip(input_shape, fuzz_dims)
+      ]
       self._run_fit_eval_predict(layer_to_test, fuzzed_shape,
                                  input_shape, layer_kwargs)
 

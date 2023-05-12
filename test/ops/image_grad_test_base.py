@@ -150,7 +150,7 @@ class ResizeBilinearOpTestBase(test.TestCase, parameterized.TestCase):
 
       return gradient_checker_v2.compute_gradient(func, [input_tensor])
 
-  @parameterized.parameters(set((True, context.executing_eagerly())))
+  @parameterized.parameters({True, context.executing_eagerly()})
   def _testShapesParameterized(self, use_tape):
 
     TEST_CASES = [[1, 1], [2, 3], [5, 4]]  # pylint: disable=invalid-name
@@ -218,7 +218,7 @@ class ResizeBilinearOpTestBase(test.TestCase, parameterized.TestCase):
           threshold = 1e-5
         self.assertAllClose(jacob_a, jacob_n, threshold, threshold)
 
-  @parameterized.parameters(set((True, context.executing_eagerly())))
+  @parameterized.parameters({True, context.executing_eagerly()})
   def testGradOnUnsupportedType(self, use_tape):
     in_shape = [1, 4, 6, 1]
     out_shape = [1, 2, 3, 1]
@@ -234,15 +234,17 @@ class ResizeBilinearOpTestBase(test.TestCase, parameterized.TestCase):
 
   def _gpuVsCpuCase(self, in_shape, out_shape, align_corners,
                     half_pixel_centers, dtype):
-    grad = {}
-    for use_gpu in [False, True]:
-      grad[use_gpu] = self._getJacobians(
-          in_shape,
-          out_shape,
-          align_corners,
-          half_pixel_centers,
-          dtype=dtype,
-          use_gpu=use_gpu)
+    grad = {
+        use_gpu: self._getJacobians(
+            in_shape,
+            out_shape,
+            align_corners,
+            half_pixel_centers,
+            dtype=dtype,
+            use_gpu=use_gpu,
+        )
+        for use_gpu in [False, True]
+    }
     threshold = 1e-4
     # Note that this is comparing both analytical and numerical Jacobians
     self.assertAllClose(grad[False], grad[True], rtol=threshold, atol=threshold)
@@ -331,7 +333,7 @@ class ResizeBicubicOpTestBase(test.TestCase, parameterized.TestCase):
 
       self.assertLess(err, 1e-3)
 
-  @parameterized.parameters(set((True, context.executing_eagerly())))
+  @parameterized.parameters({True, context.executing_eagerly()})
   def testGradOnUnsupportedType(self, use_tape):
     with test_util.AbstractGradientTape(use_tape=use_tape) as tape:
       in_shape = [1, 4, 6, 1]

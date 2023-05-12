@@ -365,9 +365,9 @@ class OneHotTest(test.TestCase):
           truth=[truth[0].T, truth[1].T])  # Do not transpose the batch
 
   def testPrefixDimOverflow(self):
+    prefix_dim_size = 65536
+    depth = 2
     for itype in [dtypes.int32, dtypes.int64, dtypes.uint8]:
-      prefix_dim_size = 65536
-      depth = 2
       x = [i % depth for i in range(prefix_dim_size)]
       indices = constant_op.constant(x, dtype=itype)
 

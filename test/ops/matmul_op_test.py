@@ -46,14 +46,14 @@ class MatVecTest(test_lib.TestCase):
 def _AddTest(test, op_name, testcase_name, fn):
   test_name = "_".join(["test", op_name, testcase_name])
   if hasattr(test, test_name):
-    raise RuntimeError("Test %s defined more than once" % test_name)
+    raise RuntimeError(f"Test {test_name} defined more than once")
   setattr(test, test_name, test_util.deprecated_graph_mode_only(fn))
 
 
 def _GetTransposedMatrices(x, x_name, kwargs):
-  if kwargs["transpose_" + x_name] is True:
+  if kwargs[f"transpose_{x_name}"] is True:
     return x.T
-  elif kwargs["adjoint_" + x_name] is True:
+  elif kwargs[f"adjoint_{x_name}"] is True:
     return np.conj(x.T)
   else:
     return x
@@ -182,8 +182,9 @@ except AttributeError:
       except AttributeError:
         r = NotImplemented
     if r is NotImplemented:
-      raise TypeError("unsupported operand type(s) for @: '{}' and '{}'"
-                      .format(type(x).__name__, type(y).__name__))
+      raise TypeError(
+          f"unsupported operand type(s) for @: '{type(x).__name__}' and '{type(y).__name__}'"
+      )
     return r
 
 
@@ -226,9 +227,9 @@ if __name__ == "__main__":
     # ROCm does not support BLAS operations for complex types
     dtypes_to_test += [np.complex64, np.complex128]
   # TF2 does not support placeholders under eager so we skip it
-  for use_static_shape in set([True, tf2.enabled()]):
+  for use_static_shape in {True, tf2.enabled()}:
     for dtype in dtypes_to_test:
-      if not use_static_shape and (dtype == np.int32 or dtype == np.int64):
+      if not use_static_shape and dtype in [np.int32, np.int64]:
         continue
       for m in sizes:
         for n in sizes:
@@ -245,9 +246,7 @@ if __name__ == "__main__":
                                            k * n).astype(dtype).reshape([k, n])
             for adjoint_a, transpose_a in trans_options:
               for adjoint_b, transpose_b in trans_options:
-                name = "%s_%s_%s_%s_%s_%s_%s_%s_%s" % (
-                    use_static_shape, dtype.__name__, m, n, k, adjoint_a,
-                    transpose_a, adjoint_b, transpose_b)
+                name = f"{use_static_shape}_{dtype.__name__}_{m}_{n}_{k}_{adjoint_a}_{transpose_a}_{adjoint_b}_{transpose_b}"
                 _AddTest(MatMulTest, "MatMulTest", name,
                          _GetMatMulTest(
                              a_np,

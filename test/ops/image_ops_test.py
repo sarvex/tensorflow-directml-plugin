@@ -169,7 +169,7 @@ class GrayscaleToRGBTest(test_util.TensorFlowTestCase):
     if len(images.shape) == 3:
       is_batch = False
       images = np.expand_dims(images, axis=0)
-    out_shape = images.shape[0:3] + (1,)
+    out_shape = images.shape[:3] + (1,)
     out = np.zeros(shape=out_shape, dtype=np.uint8)
     for batch in range(images.shape[0]):
       for y in range(images.shape[1]):
@@ -499,26 +499,25 @@ class AdjustHueTest(test_util.TensorFlowTestCase):
         "gb_same",
         "rgb_same",
     ]
-    for x_shape in x_shapes:
-      for test_style in test_styles:
-        x_np = np.random.rand(*x_shape) * 255.
-        delta_h = np.random.rand() * 2.0 - 1.0
-        if test_style == "all_random":
-          pass
-        elif test_style == "rg_same":
-          x_np[..., 1] = x_np[..., 0]
-        elif test_style == "rb_same":
-          x_np[..., 2] = x_np[..., 0]
-        elif test_style == "gb_same":
-          x_np[..., 2] = x_np[..., 1]
-        elif test_style == "rgb_same":
-          x_np[..., 1] = x_np[..., 0]
-          x_np[..., 2] = x_np[..., 0]
-        else:
-          raise AssertionError("Invalid test style: %s" % (test_style))
-        y_np = self._adjustHueNp(x_np, delta_h)
-        y_tf = self._adjustHueTf(x_np, delta_h)
-        self.assertAllClose(y_tf, y_np, rtol=2e-5, atol=1e-5)
+    for x_shape, test_style in itertools.product(x_shapes, test_styles):
+      x_np = np.random.rand(*x_shape) * 255.
+      delta_h = np.random.rand() * 2.0 - 1.0
+      if test_style == "all_random":
+        pass
+      elif test_style == "gb_same":
+        x_np[..., 2] = x_np[..., 1]
+      elif test_style == "rb_same":
+        x_np[..., 2] = x_np[..., 0]
+      elif test_style == "rg_same":
+        x_np[..., 1] = x_np[..., 0]
+      elif test_style == "rgb_same":
+        x_np[..., 1] = x_np[..., 0]
+        x_np[..., 2] = x_np[..., 0]
+      else:
+        raise AssertionError(f"Invalid test style: {test_style}")
+      y_np = self._adjustHueNp(x_np, delta_h)
+      y_tf = self._adjustHueTf(x_np, delta_h)
+      self.assertAllClose(y_tf, y_np, rtol=2e-5, atol=1e-5)
 
   def testInvalidShapes(self):
     fused = False
@@ -561,13 +560,14 @@ class FlipImageBenchmark(test.Benchmark):
           self.evaluate(run_op)
     end = time.time()
     step_time = (end - start) / benchmark_rounds
-    tag = device + "_%s" % (cpu_count if cpu_count is not None else "_all")
+    tag = f'{device}_{cpu_count if cpu_count is not None else "_all"}'
     print("benchmarkFlipLeftRight_299_299_3_%s step_time: %.2f us" %
           (tag, step_time * 1e6))
     self.report_benchmark(
-        name="benchmarkFlipLeftRight_299_299_3_%s" % (tag),
+        name=f"benchmarkFlipLeftRight_299_299_3_{tag}",
         iters=benchmark_rounds,
-        wall_time=step_time)
+        wall_time=step_time,
+    )
 
   def _benchmarkRandomFlipLeftRight(self, device, cpu_count):
     image_shape = [299, 299, 3]
@@ -591,13 +591,14 @@ class FlipImageBenchmark(test.Benchmark):
           self.evaluate(run_op)
     end = time.time()
     step_time = (end - start) / benchmark_rounds
-    tag = device + "_%s" % (cpu_count if cpu_count is not None else "_all")
+    tag = f'{device}_{cpu_count if cpu_count is not None else "_all"}'
     print("benchmarkRandomFlipLeftRight_299_299_3_%s step_time: %.2f us" %
           (tag, step_time * 1e6))
     self.report_benchmark(
-        name="benchmarkRandomFlipLeftRight_299_299_3_%s" % (tag),
+        name=f"benchmarkRandomFlipLeftRight_299_299_3_{tag}",
         iters=benchmark_rounds,
-        wall_time=step_time)
+        wall_time=step_time,
+    )
 
   def _benchmarkBatchedRandomFlipLeftRight(self, device, cpu_count):
     image_shape = [16, 299, 299, 3]
@@ -621,14 +622,15 @@ class FlipImageBenchmark(test.Benchmark):
           self.evaluate(run_op)
     end = time.time()
     step_time = (end - start) / benchmark_rounds
-    tag = device + "_%s" % (cpu_count if cpu_count is not None else "_all")
+    tag = f'{device}_{cpu_count if cpu_count is not None else "_all"}'
     print("benchmarkBatchedRandomFlipLeftRight_16_299_299_3_%s step_time: "
           "%.2f us" %
           (tag, step_time * 1e6))
     self.report_benchmark(
-        name="benchmarkBatchedRandomFlipLeftRight_16_299_299_3_%s" % (tag),
+        name=f"benchmarkBatchedRandomFlipLeftRight_16_299_299_3_{tag}",
         iters=benchmark_rounds,
-        wall_time=step_time)
+        wall_time=step_time,
+    )
 
   def benchmarkFlipLeftRightCpu1(self):
     self._benchmarkFlipLeftRight("/cpu:0", 1)
@@ -683,13 +685,14 @@ class AdjustHueBenchmark(test.Benchmark):
         self.evaluate(run_op)
     end = time.time()
     step_time = (end - start) / benchmark_rounds
-    tag = device + "_%s" % (cpu_count if cpu_count is not None else "_all")
+    tag = f'{device}_{cpu_count if cpu_count is not None else "_all"}'
     print("benchmarkAdjustHue_299_299_3_%s step_time: %.2f us" %
           (tag, step_time * 1e6))
     self.report_benchmark(
-        name="benchmarkAdjustHue_299_299_3_%s" % (tag),
+        name=f"benchmarkAdjustHue_299_299_3_{tag}",
         iters=benchmark_rounds,
-        wall_time=step_time)
+        wall_time=step_time,
+    )
 
   def benchmarkAdjustHueCpu1(self):
     self._benchmarkAdjustHue("/cpu:0", 1)
@@ -727,13 +730,14 @@ class AdjustSaturationBenchmark(test.Benchmark):
         self.evaluate(run_op)
     end = time.time()
     step_time = (end - start) / benchmark_rounds
-    tag = device + "_%s" % (cpu_count if cpu_count is not None else "_all")
+    tag = f'{device}_{cpu_count if cpu_count is not None else "_all"}'
     print("benchmarkAdjustSaturation_299_299_3_%s step_time: %.2f us" %
           (tag, step_time * 1e6))
     self.report_benchmark(
-        name="benchmarkAdjustSaturation_299_299_3_%s" % (tag),
+        name=f"benchmarkAdjustSaturation_299_299_3_{tag}",
         iters=benchmark_rounds,
-        wall_time=step_time)
+        wall_time=step_time,
+    )
 
   def benchmarkAdjustSaturationCpu1(self):
     self._benchmarkAdjustSaturation("/cpu:0", 1)
@@ -768,8 +772,8 @@ class ResizeBilinearBenchmark(test.Benchmark):
       results = self.run_op_benchmark(
           sess,
           benchmark_op,
-          name=("resize_bilinear_%s_%s_%s" % (image_size[0], image_size[1],
-                                              num_channels)))
+          name=f"resize_bilinear_{image_size[0]}_{image_size[1]}_{num_channels}",
+      )
       print("%s   : %.2f ms/img" %
             (results["name"],
              1000 * results["wall_time"] / (batch_size * num_ops)))
@@ -817,8 +821,8 @@ class ResizeBicubicBenchmark(test.Benchmark):
           sess,
           benchmark_op,
           min_iters=20,
-          name=("resize_bicubic_%s_%s_%s" % (image_size[0], image_size[1],
-                                             num_channels)))
+          name=f"resize_bicubic_{image_size[0]}_{image_size[1]}_{num_channels}",
+      )
       print("%s   : %.2f ms/img" %
             (results["name"],
              1000 * results["wall_time"] / (batch_size * num_ops)))
@@ -873,8 +877,8 @@ class ResizeAreaBenchmark(test.Benchmark):
       results = self.run_op_benchmark(
           sess,
           benchmark_op,
-          name=("resize_area_%s_%s_%s" % (image_size[0], image_size[1],
-                                          num_channels)))
+          name=f"resize_area_{image_size[0]}_{image_size[1]}_{num_channels}",
+      )
       print("%s   : %.2f ms/img" %
             (results["name"],
              1000 * results["wall_time"] / (batch_size * num_ops)))
@@ -979,26 +983,25 @@ class AdjustSaturationTest(test_util.TensorFlowTestCase):
         "rgb_same",
     ]
     with self.cached_session():
-      for x_shape in x_shapes:
-        for test_style in test_styles:
-          x_np = np.random.rand(*x_shape) * 255.
-          scale = np.random.rand()
-          if test_style == "all_random":
-            pass
-          elif test_style == "rg_same":
-            x_np[..., 1] = x_np[..., 0]
-          elif test_style == "rb_same":
-            x_np[..., 2] = x_np[..., 0]
-          elif test_style == "gb_same":
-            x_np[..., 2] = x_np[..., 1]
-          elif test_style == "rgb_same":
-            x_np[..., 1] = x_np[..., 0]
-            x_np[..., 2] = x_np[..., 0]
-          else:
-            raise AssertionError("Invalid test style: %s" % (test_style))
-          y_baseline = self._adjustSaturationNp(x_np, scale)
-          y_fused = self.evaluate(image_ops.adjust_saturation(x_np, scale))
-          self.assertAllClose(y_fused, y_baseline, rtol=2e-5, atol=1e-5)
+      for x_shape, test_style in itertools.product(x_shapes, test_styles):
+        x_np = np.random.rand(*x_shape) * 255.
+        scale = np.random.rand()
+        if test_style == "all_random":
+          pass
+        elif test_style == "gb_same":
+          x_np[..., 2] = x_np[..., 1]
+        elif test_style == "rb_same":
+          x_np[..., 2] = x_np[..., 0]
+        elif test_style == "rg_same":
+          x_np[..., 1] = x_np[..., 0]
+        elif test_style == "rgb_same":
+          x_np[..., 1] = x_np[..., 0]
+          x_np[..., 2] = x_np[..., 0]
+        else:
+          raise AssertionError(f"Invalid test style: {test_style}")
+        y_baseline = self._adjustSaturationNp(x_np, scale)
+        y_fused = self.evaluate(image_ops.adjust_saturation(x_np, scale))
+        self.assertAllClose(y_fused, y_baseline, rtol=2e-5, atol=1e-5)
 
 
 class FlipTransposeRotateTest(test_util.TensorFlowTestCase,
@@ -1482,9 +1485,8 @@ class FlipTransposeRotateTest(test_util.TensorFlowTestCase,
                                              [[9, 10, 11], [6, 7, 8]]]])
 
     def generator():
-      image_input = np.array(
-          [[[[0, 1, 2], [3, 4, 5]], [[6, 7, 8], [9, 10, 11]]]], np.int32)
-      yield image_input
+      yield np.array([[[[0, 1, 2], [3, 4, 5]], [[6, 7, 8], [9, 10, 11]]]],
+                     np.int32)
 
     dataset = dataset_ops.Dataset.from_generator(
         generator,
@@ -1551,8 +1553,7 @@ class AdjustContrastTest(test_util.TensorFlowTestCase):
 
   def _adjustContrastNp(self, x_np, contrast_factor):
     mean = np.mean(x_np, (1, 2), keepdims=True)
-    y_np = mean + contrast_factor * (x_np - mean)
-    return y_np
+    return mean + contrast_factor * (x_np - mean)
 
   def _adjustContrastTf(self, x_np, contrast_factor):
     with self.cached_session():

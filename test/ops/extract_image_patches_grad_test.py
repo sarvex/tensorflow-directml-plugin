@@ -109,7 +109,7 @@ class ExtractImagePatchesGradTest(test.TestCase, parameterized.TestCase):
               *gradient_checker_v2.compute_gradient(extract, [in_val]))
           self.assertLess(err, 1e-4)
 
-  @parameterized.parameters(set((True, context.executing_eagerly())))
+  @parameterized.parameters({True, context.executing_eagerly()})
   def testConstructGradientWithLargeImages(self, use_tape):
     with test_util.AbstractGradientTape(use_tape=use_tape) as tape:
       batch_size = 4

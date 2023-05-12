@@ -396,7 +396,7 @@ class BatchNormalizationTest(test.TestCase):
     for dtype in [np.float16, np.float32]:
       for use_gpu in use_gpu_vals:
         for data_format in data_format_list:
-          if data_format == 'NHWC' or data_format == 'NDHWC':
+          if data_format in ['NHWC', 'NDHWC']:
             scale_shape = x_shape[-1:]
           else:
             scale_shape = x_shape[1:2]
@@ -411,25 +411,24 @@ class BatchNormalizationTest(test.TestCase):
                   data_format=data_format,
                   is_training=is_training,
                   exponential_avg_factor=exponential_avg_factor)
+            elif is_training:
+              self._test_training(
+                  x_shape,
+                  dtype,
+                  scale_shape,
+                  np.float32,
+                  use_gpu=use_gpu,
+                  data_format=data_format,
+                  exponential_avg_factor=exponential_avg_factor)
             else:
-              if is_training:
-                self._test_training(
-                    x_shape,
-                    dtype,
-                    scale_shape,
-                    np.float32,
-                    use_gpu=use_gpu,
-                    data_format=data_format,
-                    exponential_avg_factor=exponential_avg_factor)
-              else:
-                self._test_inference(
-                    x_shape,
-                    dtype,
-                    scale_shape,
-                    np.float32,
-                    use_gpu=use_gpu,
-                    data_format=data_format,
-                    exponential_avg_factor=exponential_avg_factor)
+              self._test_inference(
+                  x_shape,
+                  dtype,
+                  scale_shape,
+                  np.float32,
+                  use_gpu=use_gpu,
+                  data_format=data_format,
+                  exponential_avg_factor=exponential_avg_factor)
 
   def testInferenceShape1(self):
     x_shape = [1, 1, 6, 1]

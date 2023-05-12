@@ -224,11 +224,7 @@ class CorrectnessTest(keras_parameterized.TestCase):
 
   @keras_parameterized.run_with_all_model_types
   @keras_parameterized.run_all_keras_modes
-  @parameterized.named_parameters([
-      ('', dict()),
-      ('_clipvalue_inf', {'clipvalue': 999999}),
-      ('_clipnorm_inf', {'clipnorm': 999999}),
-  ])
+  @parameterized.named_parameters([('', {}), ('_clipvalue_inf', {'clipvalue': 999999}), ('_clipnorm_inf', {'clipnorm': 999999})])
   def test_loss_correctness(self, optimizer_kwargs):
     # Test that training loss is the same in eager and graph
     # (by comparing it to a reference value in a deterministic case)

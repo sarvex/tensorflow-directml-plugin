@@ -61,37 +61,39 @@ class _TestGroup:
 
     def run(self, parallel, redirect_output):
         """Runs the tests"""
-        if self.tests:
-            start_time = time.time()
+        if not self.tests:
+            return
+        start_time = time.time()
+        if parallel:
             results = []
 
-            if parallel:
-                with Pool(processes=6) as pool:
-                    for test in self.tests:
-                        result = pool.apply_async(
-                            _test_runner,
-                            (test, self.timeout_seconds, start_time, redirect_output),
-                        )
-                        results.append(result)
-
-                    for result in results:
-                        if not result.get():
-                            raise KeyboardInterrupt
-            else:
+            with Pool(processes=6) as pool:
                 for test in self.tests:
-                    if not _test_runner(
-                        test, self.timeout_seconds, start_time, redirect_output
-                    ):
-                        raise KeyboardInterrupt
-            end_time = time.time()
+                    result = pool.apply_async(
+                        _test_runner,
+                        (test, self.timeout_seconds, start_time, redirect_output),
+                    )
+                    results.append(result)
 
-            with open(self.run_results_file_path, "w", encoding="utf-8") as file:
-                summary = {}
-                summary["name"] = self.name
-                summary["start_timestamp_seconds"] = start_time
-                summary["end_timestamp_seconds"] = end_time
-                summary["duration_seconds"] = end_time - start_time
-                json.dump(summary, file)
+                for result in results:
+                    if not result.get():
+                        raise KeyboardInterrupt
+        else:
+            for test in self.tests:
+                if not _test_runner(
+                    test, self.timeout_seconds, start_time, redirect_output
+                ):
+                    raise KeyboardInterrupt
+        end_time = time.time()
+
+        with open(self.run_results_file_path, "w", encoding="utf-8") as file:
+            summary = {
+                "name": self.name,
+                "start_timestamp_seconds": start_time,
+                "end_timestamp_seconds": end_time,
+                "duration_seconds": end_time - start_time,
+            }
+            json.dump(summary, file)
 
     def summarize(self):
         """Outputs the results of the TestGroup run"""
@@ -106,22 +108,22 @@ class _TestGroup:
                 end_timestamp_seconds = json_data["end_timestamp_seconds"]
                 duration_seconds = json_data["duration_seconds"]
 
-        summary = {}
-        summary["name"] = self.name
-        summary["start_timestamp_seconds"] = start_timestamp_seconds
-        summary["end_timestamp_seconds"] = end_timestamp_seconds
-        summary["duration_seconds"] = duration_seconds
-        summary["tests_total_count"] = 0
-        summary["tests_passed_count"] = 0
-        summary["tests_failed_count"] = 0
-        summary["tests_skipped_count"] = 0
-        summary["tests_timed_out_count"] = 0
-        summary["cases_total_count"] = 0
-        summary["cases_passed_count"] = 0
-        summary["cases_failed_count"] = 0
-        summary["cases_skipped_count"] = 0
-        summary["tests"] = []
-
+        summary = {
+            "name": self.name,
+            "start_timestamp_seconds": start_timestamp_seconds,
+            "end_timestamp_seconds": end_timestamp_seconds,
+            "duration_seconds": duration_seconds,
+            "tests_total_count": 0,
+            "tests_passed_count": 0,
+            "tests_failed_count": 0,
+            "tests_skipped_count": 0,
+            "tests_timed_out_count": 0,
+            "cases_total_count": 0,
+            "cases_passed_count": 0,
+            "cases_failed_count": 0,
+            "cases_skipped_count": 0,
+            "tests": [],
+        }
         for test in self.tests:
             test_summary = test.summarize()
 
@@ -217,7 +219,7 @@ class _Test:
             self.args.append(f"--gtest_output=xml:{self.results_file_path}")
 
         if str(name) == "ops.reduction_ops_test":
-            self.args = ['"' + gpu_name + '"'] + self.args
+            self.args = [f'"{gpu_name}"'] + self.args
 
         if is_python_test:
             self.command_line = f"python {test_file_path} {' '.join(self.args)}"
@@ -275,12 +277,13 @@ class _Test:
 
         # Write run results JSON.
         with open(self.run_results_file_path, "w", encoding="utf-8") as file:
-            summary = {}
-            summary["name"] = self.name
-            summary["start_timestamp_seconds"] = start_time
-            summary["end_timestamp_seconds"] = end_time
-            summary["duration_seconds"] = end_time - start_time
-            summary["run_state"] = run_state
+            summary = {
+                "name": self.name,
+                "start_timestamp_seconds": start_time,
+                "end_timestamp_seconds": end_time,
+                "duration_seconds": end_time - start_time,
+                "run_state": run_state,
+            }
             json.dump(summary, file)
 
     def summarize(self):

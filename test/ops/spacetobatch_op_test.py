@@ -658,10 +658,8 @@ class RequiredSpaceToBatchPaddingsTest(test.TestCase):
     self.assertIsNotNone(crops_const)
     self._checkProperties(input_shape, block_shape, base_paddings,
                           paddings_const, crops_const)
-    # Check with non-constants.
-    assignments = {}
     input_shape_placeholder = array_ops.placeholder(dtypes.int32)
-    assignments[input_shape_placeholder] = input_shape
+    assignments = {input_shape_placeholder: input_shape}
     block_shape_placeholder = array_ops.placeholder(dtypes.int32,
                                                     [len(block_shape)])
     assignments[block_shape_placeholder] = block_shape

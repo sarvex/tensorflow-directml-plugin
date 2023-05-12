@@ -75,17 +75,12 @@ class CuDNNTest(keras_parameterized.TestCase):
     x = layers.Input(shape=input_shape[1:], dtype=input_dtype)
     y = layer(x)
 
-    test_weights = []
     weights_input = layer.get_weights()[0]
     weights_input = np.transpose(weights_input)
-    for x in weights_input:
-        test_weights.append(x)
-
+    test_weights = list(weights_input)
     weights_hidden = layer.get_weights()[1]
     weights_hidden = np.transpose(weights_hidden)
-    for x in weights_hidden:
-        test_weights.append(x)
-
+    test_weights.extend(iter(weights_hidden))
     num_params = weights_input.shape[0]
     biases = layer.get_weights()[2]
 

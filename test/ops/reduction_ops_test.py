@@ -198,8 +198,7 @@ class SumReductionTest(BaseReductionTest):
     return math_ops.reduce_sum(x, reduction_axes, keepdims)
 
   def _np_reduce(self, x, reduction_axes, keepdims):
-    if isinstance(reduction_axes, list) or isinstance(reduction_axes,
-                                                      np.ndarray):
+    if isinstance(reduction_axes, (list, np.ndarray)):
       reduction_axes = tuple(reduction_axes)
     return np.sum(x, axis=reduction_axes, keepdims=keepdims)
 
@@ -398,8 +397,7 @@ class MeanReductionTest(BaseReductionTest):
     return math_ops.reduce_mean(x, reduction_axes, keepdims)
 
   def _np_reduce(self, x, reduction_axes, keepdims):
-    if isinstance(reduction_axes, list) or isinstance(reduction_axes,
-                                                      np.ndarray):
+    if isinstance(reduction_axes, (list, np.ndarray)):
       reduction_axes = tuple(reduction_axes)
     elif isinstance(reduction_axes, numbers.Integral):
       reduction_axes = (reduction_axes,)
@@ -510,8 +508,7 @@ class EuclideanNormReductionTest(BaseReductionTest):
     return math_ops.reduce_euclidean_norm(x, reduction_axes, keepdims)
 
   def _np_reduce(self, x, reduction_axes, keepdims):
-    if isinstance(reduction_axes, list) or isinstance(reduction_axes,
-                                                      np.ndarray):
+    if isinstance(reduction_axes, (list, np.ndarray)):
       reduction_axes = tuple(reduction_axes)
     np_fro = np.sqrt(
         np.sum(x * np.conj(x), axis=reduction_axes, keepdims=keepdims))
@@ -601,8 +598,7 @@ class ProdReductionTest(BaseReductionTest):
     return math_ops.reduce_prod(x, reduction_axes, keepdims)
 
   def _np_reduce(self, x, reduction_axes, keepdims):
-    if isinstance(reduction_axes, list) or isinstance(reduction_axes,
-                                                      np.ndarray):
+    if isinstance(reduction_axes, (list, np.ndarray)):
       reduction_axes = tuple(reduction_axes)
     return np.prod(x, axis=reduction_axes, keepdims=keepdims)
 

@@ -78,12 +78,11 @@ class TopKTest(test.TestCase):
         # Check that if two elements are equal, the lower-index element appears
         # first.
         shape = values.shape
-        for batch_index in range(shape[0]):
-          for index in range(shape[1] - 1):
-            if np.isclose(values[batch_index, index],
-                          values[batch_index, index + 1]):
-              self.assertLess(indices[batch_index, index],
-                              indices[batch_index, index + 1])
+        for batch_index, index in itertools.product(range(shape[0]), range(shape[1] - 1)):
+          if np.isclose(values[batch_index, index],
+                        values[batch_index, index + 1]):
+            self.assertLess(indices[batch_index, index],
+                            indices[batch_index, index + 1])
 
         # Now check the results, ignoring order.
         self.assertAllEqual(np.sort(np_expected_indices), np.sort(indices))
@@ -98,13 +97,12 @@ class TopKTest(test.TestCase):
     self._validateTopK(inputs, 2, [[0.4, 0.3], [0.4, 0.3]], [[3, 1], [2, 1]])
 
   def testTop3(self):
-    for k in range(3, 11, 2):
-      for dim in range(512, 12288, 512):
-        inputs = np.random.permutation(
-            np.linspace(0, 100, dim, dtype=np.float64))
-        indices = np.argsort(-inputs)[:k]
-        values = -np.sort(-inputs)[:k]
-        self._validateTopK(inputs, k, values, indices)
+    for k, dim in itertools.product(range(3, 11, 2), range(512, 12288, 512)):
+      inputs = np.random.permutation(
+          np.linspace(0, 100, dim, dtype=np.float64))
+      indices = np.argsort(-inputs)[:k]
+      values = -np.sort(-inputs)[:k]
+      self._validateTopK(inputs, k, values, indices)
 
   def _testLargeSort(self, dtype):
     b = 10
@@ -227,7 +225,7 @@ class TopKBenchmark(test.Benchmark):
       if k == 0:
         continue
       name = "m_%d_n_%d_k_%g_use_gpu_%s" % (m, n, k, use_gpu)
-      device = "/%s:0" % ("gpu" if use_gpu else "cpu")
+      device = f'/{"gpu" if use_gpu else "cpu"}:0'
       with ops.Graph().as_default():
         with ops.device(device):
           x = random_ops.random_uniform((m, n))

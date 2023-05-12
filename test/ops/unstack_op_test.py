@@ -37,10 +37,7 @@ class UnstackOpTest(test.TestCase):
 
   def randn(self, shape, dtype):
     data = np.random.randn(*shape)
-    if dtype == np.bool_:
-      return data < 0  # Naive casting yields True with P(1)!
-    else:
-      return data.astype(dtype)
+    return data < 0 if dtype == np.bool_ else data.astype(dtype)
 
   def unstackReference(self, data, axis):
     """Use numpy primitives to implement unstack equivalent."""

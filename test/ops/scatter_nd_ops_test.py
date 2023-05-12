@@ -616,7 +616,7 @@ class ScatterNdTest(test.TestCase, parameterized.TestCase):
         r"Dimensions \[\d\,\d\) of input\[shape="):
       self.scatter_nd(indices, updates, shape)
 
-  @parameterized.parameters(set((True, context.executing_eagerly())))
+  @parameterized.parameters({True, context.executing_eagerly()})
   def testGradientsRank2ElementUpdate(self, use_tape):
     for dtype in GRADIENT_TESTS_DTYPES:
       with test_util.AbstractGradientTape(use_tape=use_tape) as tape:
@@ -639,7 +639,7 @@ class ScatterNdTest(test.TestCase, parameterized.TestCase):
       if self.non_aliasing_add_test:
         self.assertAllEqual(expected_input_grad, self.evaluate(input_grad))
 
-  @parameterized.parameters(set((True, context.executing_eagerly())))
+  @parameterized.parameters({True, context.executing_eagerly()})
   def testGradientsRank2SliceUpdate(self, use_tape):
     for dtype in GRADIENT_TESTS_DTYPES:
       with test_util.AbstractGradientTape(use_tape=use_tape) as tape:
@@ -662,7 +662,7 @@ class ScatterNdTest(test.TestCase, parameterized.TestCase):
       if self.non_aliasing_add_test:
         self.assertAllEqual(expected_input_grad, self.evaluate(input_grad))
 
-  @parameterized.parameters(set((True, context.executing_eagerly())))
+  @parameterized.parameters({True, context.executing_eagerly()})
   def testGradientsRank3SliceUpdate(self, use_tape):
     for dtype in GRADIENT_TESTS_DTYPES:
       with test_util.AbstractGradientTape(use_tape=use_tape) as tape:
@@ -688,7 +688,7 @@ class ScatterNdTest(test.TestCase, parameterized.TestCase):
       if self.non_aliasing_add_test:
         self.assertAllEqual(expected_input_grad, self.evaluate(input_grad))
 
-  @parameterized.parameters(set((True, context.executing_eagerly())))
+  @parameterized.parameters({True, context.executing_eagerly()})
   def testGradientsRank7SliceUpdate(self, use_tape):
     for dtype in GRADIENT_TESTS_DTYPES:
       with test_util.AbstractGradientTape(use_tape=use_tape) as tape:

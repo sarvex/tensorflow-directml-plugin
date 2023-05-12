@@ -179,11 +179,10 @@ class BinaryOpTest(test.TestCase):
       tf_gpu = self.evaluate(out)
     if x.dtype == np.float16:
       self.assertAllClose(np_ans, tf_gpu, rtol=2e-3)
+    elif tf_func == math_ops.atan2:
+      self.assertAllClose(np_ans, tf_gpu, atol=2e-5)
     else:
-      if tf_func == math_ops.atan2:
-        self.assertAllClose(np_ans, tf_gpu, atol=2e-5)
-      else:
-        self.assertAllClose(np_ans, tf_gpu)
+      self.assertAllClose(np_ans, tf_gpu)
     self.assertShapeEqual(np_ans, out)
 
   def _compareBoth(self, x, y, np_func, tf_func, also_compare_variables=False):
@@ -235,7 +234,7 @@ class BinaryOpTest(test.TestCase):
       self._compareBoth(n_small, x_pos_small, special.polygamma,
                         math_ops.polygamma)
     except ImportError as e:
-      tf_logging.warn("Cannot test special functions: %s" % str(e))
+      tf_logging.warn(f"Cannot test special functions: {str(e)}")
 
   @test_util.run_deprecated_v1
   def testFloatDifferentShapes(self):
@@ -296,7 +295,7 @@ class BinaryOpTest(test.TestCase):
       self._compareBoth(a_pos_small, x_pos_small, special.gammaincc,
                         math_ops.igammac)
     except ImportError as e:
-      tf_logging.warn("Cannot test special functions: %s" % str(e))
+      tf_logging.warn(f"Cannot test special functions: {str(e)}")
 
   def testUint8Basic(self):
     x = np.arange(1, 13, 2).reshape(1, 3, 2).astype(np.uint8)

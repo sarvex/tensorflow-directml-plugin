@@ -80,7 +80,7 @@ def repack_diagonals_in_tests(tests, align=None):
   if align == default_v2_alignment or align is None:
     return tests
 
-  new_tests = dict()
+  new_tests = {}
   # Loops through each case.
   for diag_index, (packed_diagonals, padded_diagonals) in tests.items():
     num_rows, num_cols = padded_diagonals.shape[-2:]
@@ -104,7 +104,7 @@ def square_cases(align=None):
                    [1, 2, 3, 4, 5],
                    [6, 7, 8, 9, 1],
                    [2, 3, 4, 5, 6]]])
-  tests = dict()
+  tests = {}
   # tests[d_lower, d_upper] = (packed_diagonals, padded_diagonals)
   tests[-1, -1] = (np.array([[6, 4, 1, 7],
                              [5, 2, 8, 5]]),
@@ -182,7 +182,7 @@ def tall_cases(align=None):
                    [4, 5, 6],
                    [7, 8, 9],
                    [9, 8, 7]]])
-  tests = dict()
+  tests = {}
   tests[0, 0] = (np.array([[1, 5, 9],
                            [3, 2, 6]]),
                  np.array([[[1, 0, 0],
@@ -265,7 +265,7 @@ def fat_cases(align=None):
                   [[4, 5, 6, 7],
                    [8, 9, 1, 2],
                    [3, 4, 5, 6]]])
-  tests = dict()
+  tests = {}
   tests[2, 2] = (np.array([[3, 8],
                            [6, 2]]),
                  np.array([[[0, 0, 3, 0],
@@ -331,7 +331,7 @@ class MatrixDiagTest(test.TestCase):
                      [[5, 4, 3, 2],
                       [1, 2, 3, 4],
                       [5, 6, 7, 8]]])
-    tests = dict()
+    tests = {}
     tests[-3, -1] = (vecs,
                      np.array([[[0, 0, 0, 0, 0],
                                 [1, 0, 0, 0, 0],
@@ -438,10 +438,6 @@ class MatrixDiagTest(test.TestCase):
   @test_util.run_deprecated_v1
   def testRectangularBatch(self):
     with self.cached_session():
-      # Stores expected num_rows and num_cols (when the other is given).
-      # expected[d_lower, d_upper] = (expected_num_rows, expected_num_cols)
-      test_list = list()
-
       # Square cases:
       expected = {
           (-1, -1): (5, 4),
@@ -449,10 +445,7 @@ class MatrixDiagTest(test.TestCase):
           (-2, 1): (5, 5),
           (2, 4): (3, 5),
       }
-      # Do not change alignment yet. Re-alignment needs to happen after the
-      # solution shape is updated.
-      test_list.append((expected, square_cases()))
-
+      test_list = [(expected, square_cases())]
       # More cases:
       expected = {(-3, -1): (5, 4), (-1, 1): (4, 4), (2, 4): (4, 6)}
       test_list.append((expected, self._moreCases()))
@@ -557,7 +550,7 @@ class MatrixDiagTest(test.TestCase):
         self.assertLess(error, 1e-4)
 
     # {Sub,super}diagonals/band.
-    tests = dict()  # tests[shape] = (d_lower, d_upper)
+    tests = {}
     tests[(3,)] = (-1, -1)
     tests[(7, 3, 4)] = (-1, 1)
     with self.session():
@@ -734,9 +727,8 @@ class MatrixSetDiagTest(test.TestCase):
   @test_util.run_deprecated_v1
   def testGrad(self):
     input_shapes = [(3, 4, 4), (3, 3, 4), (3, 4, 3), (7, 4, 8, 8)]
-    diag_bands = [(0, 0)]
+    diag_bands = [(0, 0), (-1, 1)]
 
-    diag_bands.append((-1, 1))
     for input_shape, diags, align in itertools.product(input_shapes, diag_bands,
                                                        alignment_list):
       lower_diag_index, upper_diag_index = diags
@@ -906,7 +898,7 @@ class MatrixDiagPartTest(test.TestCase):
         self.assertLess(error, 1e-4)
 
     # {Sub,super}diagonals/band.
-    tests = dict()  # tests[shape] = (d_lower, d_upper)
+    tests = {}
     tests[(3, 3)] = (-1, -1)
     tests[(7, 3, 4)] = (-1, 1)
     with self.session():
@@ -1156,16 +1148,15 @@ class DiagGradOpTest(test.TestCase):
     dtypes = (dtypes_lib.float32, dtypes_lib.float64)
     with self.session(use_gpu=False):
       errors = []
-      for shape in shapes:
-        for dtype in dtypes:
-          x1 = constant_op.constant(np.random.rand(*shape), dtype=dtype)
-          y = array_ops.diag(x1)
-          error = gradient_checker.compute_gradient_error(
-              x1,
-              x1.get_shape().as_list(), y,
-              y.get_shape().as_list())
-          tf_logging.info("error = %f", error)
-          self.assertLess(error, 1e-4)
+      for shape, dtype in itertools.product(shapes, dtypes):
+        x1 = constant_op.constant(np.random.rand(*shape), dtype=dtype)
+        y = array_ops.diag(x1)
+        error = gradient_checker.compute_gradient_error(
+            x1,
+            x1.get_shape().as_list(), y,
+            y.get_shape().as_list())
+        tf_logging.info("error = %f", error)
+        self.assertLess(error, 1e-4)
 
 
 class DiagGradPartOpTest(test.TestCase):
@@ -1177,16 +1168,15 @@ class DiagGradPartOpTest(test.TestCase):
     dtypes = (dtypes_lib.float32, dtypes_lib.float64)
     with self.session(use_gpu=False):
       errors = []
-      for shape in shapes:
-        for dtype in dtypes:
-          x1 = constant_op.constant(np.random.rand(*shape), dtype=dtype)
-          y = array_ops.diag_part(x1)
-          error = gradient_checker.compute_gradient_error(
-              x1,
-              x1.get_shape().as_list(), y,
-              y.get_shape().as_list())
-          tf_logging.info("error = %f", error)
-          self.assertLess(error, 1e-4)
+      for shape, dtype in itertools.product(shapes, dtypes):
+        x1 = constant_op.constant(np.random.rand(*shape), dtype=dtype)
+        y = array_ops.diag_part(x1)
+        error = gradient_checker.compute_gradient_error(
+            x1,
+            x1.get_shape().as_list(), y,
+            y.get_shape().as_list())
+        tf_logging.info("error = %f", error)
+        self.assertLess(error, 1e-4)
 
 
 if __name__ == "__main__":

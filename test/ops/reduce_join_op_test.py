@@ -55,9 +55,8 @@ def _joined_array(num_dims, reduce_dim):
   flat = result.ravel()
   for i in range(2**(num_dims - 1)):
     dims = formatter.format(i)
-    flat[i] = "".join([
-        (dims[:reduce_dim] + "%d" + dims[reduce_dim:]) % j for j in range(2)
-    ])
+    flat[i] = "".join(
+        [f"{dims[:reduce_dim]}%d{dims[reduce_dim:]}" % j for j in range(2)])
   return result
 
 

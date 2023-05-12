@@ -25,7 +25,7 @@ from tensorflow.python.training import training_util
 class GlobalStepTest(test.TestCase):
 
   def _assert_global_step(self, global_step, expected_dtype=dtypes.int64):
-    self.assertEqual('%s:0' % ops.GraphKeys.GLOBAL_STEP, global_step.name)
+    self.assertEqual(f'{ops.GraphKeys.GLOBAL_STEP}:0', global_step.name)
     self.assertEqual(expected_dtype, global_step.dtype.base_dtype)
     self.assertEqual([], global_step.get_shape().as_list())
 

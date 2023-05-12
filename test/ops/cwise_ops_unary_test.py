@@ -220,7 +220,7 @@ class UnaryOpTest(test.TestCase):
       self._compareBoth(x, special.i0e, special_math_ops.bessel_i0e)
       self._compareBoth(x, special.i1e, special_math_ops.bessel_i1e)
     except ImportError as e:
-      tf_logging.warn("Cannot test special functions: %s" % str(e))
+      tf_logging.warn(f"Cannot test special functions: {str(e)}")
 
     self._compareBothSparse(x, np.abs, math_ops.abs)
     self._compareBothSparse(x, np.negative, math_ops.negative)
@@ -275,7 +275,7 @@ class UnaryOpTest(test.TestCase):
       self._compareBoth(x, special.i0e, special_math_ops.bessel_i0e)
       self._compareBoth(x, special.i1e, special_math_ops.bessel_i1e)
     except ImportError as e:
-      tf_logging.warn("Cannot test special functions: %s" % str(e))
+      tf_logging.warn(f"Cannot test special functions: {str(e)}")
 
     self._compareBothSparse(x, np.abs, math_ops.abs)
     self._compareBothSparse(x, np.negative, math_ops.negative)
@@ -329,7 +329,7 @@ class UnaryOpTest(test.TestCase):
       self._compareBoth(x, special.i0e, special_math_ops.bessel_i0e)
       self._compareBoth(x, special.i1e, special_math_ops.bessel_i1e)
     except ImportError as e:
-      tf_logging.warn("Cannot test special functions: %s" % str(e))
+      tf_logging.warn(f"Cannot test special functions: {str(e)}")
 
     self._compareBothSparse(x, np.abs, math_ops.abs)
     self._compareBothSparse(x, np.negative, math_ops.negative)

@@ -66,11 +66,8 @@ def _generate_op_struct(operator):
     # it's unique, since it stores the original op name as a field.
     struct_name = operator.name.replace(">", "_")
 
-    arg_names = []
-    for arg in operator.input_arg:
-        arg_names.append(f"        {arg.name}")
-    for arg in operator.output_arg:
-        arg_names.append(f"        {arg.name}")
+    arg_names = [f"        {arg.name}" for arg in operator.input_arg]
+    arg_names.extend(f"        {arg.name}" for arg in operator.output_arg)
     arg_names = ",\n".join(arg_names)
 
     arg_metadata = []

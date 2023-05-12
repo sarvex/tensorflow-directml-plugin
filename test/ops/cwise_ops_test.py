@@ -305,15 +305,11 @@ class LogicalOpTest(test.TestCase):
     # `Tensor` as a Python `bool`.
     b = constant_op.constant(False)
     with self.assertRaises(TypeError):
-      if b:
-        pass
-
+      pass
     x = constant_op.constant(3)
     y = constant_op.constant(4)
     with self.assertRaises(TypeError):
-      if x > y:
-        pass
-
+      pass
     z = constant_op.constant(7)
 
     # The chained comparison should fail because Python computes `x <
@@ -359,9 +355,7 @@ class SelectOpTest(test.TestCase):
         _, jacob_n = gradient_checker.compute_gradient(
             inxf, s, outf, s, x_init_value=xf)
         jacob_n = jacob_n.astype(x.dtype)
-    if x.dtype == np.float16:
-      self.assertAllClose(jacob_t, jacob_n, rtol=1e-3, atol=1e-3)
-    elif x.dtype == np.float32:
+    if x.dtype in [np.float16, np.float32]:
       self.assertAllClose(jacob_t, jacob_n, rtol=1e-3, atol=1e-3)
     elif x.dtype == np.float64:
       self.assertAllClose(jacob_t, jacob_n, rtol=1e-5, atol=1e-5)
@@ -383,9 +377,7 @@ class SelectOpTest(test.TestCase):
         _, jacob_n = gradient_checker.compute_gradient(
             inyf, s, outf, s, x_init_value=yf)
         jacob_n = jacob_n.astype(x.dtype)
-    if x.dtype == np.float16:
-      self.assertAllClose(jacob_t, jacob_n, rtol=1e-3, atol=1e-3)
-    elif x.dtype == np.float32:
+    if x.dtype in [np.float16, np.float32]:
       self.assertAllClose(jacob_t, jacob_n, rtol=1e-3, atol=1e-3)
     elif x.dtype == np.float64:
       self.assertAllClose(jacob_t, jacob_n, rtol=1e-5, atol=1e-5)
@@ -656,9 +648,7 @@ class BatchSelectOpTest(test.TestCase):
         _, jacob_n = gradient_checker.compute_gradient(
             inxf, s, outf, s, x_init_value=xf)
         jacob_n = jacob_n.astype(x.dtype)
-    if x.dtype == np.float16:
-      self.assertAllClose(jacob_t, jacob_n, rtol=1e-3, atol=1e-3)
-    elif x.dtype == np.float32:
+    if x.dtype in [np.float16, np.float32]:
       self.assertAllClose(jacob_t, jacob_n, rtol=1e-3, atol=1e-3)
     elif x.dtype == np.float64:
       self.assertAllClose(jacob_t, jacob_n, rtol=1e-5, atol=1e-5)
@@ -680,9 +670,7 @@ class BatchSelectOpTest(test.TestCase):
         _, jacob_n = gradient_checker.compute_gradient(
             inyf, s, outf, s, x_init_value=yf)
         jacob_n = jacob_n.astype(x.dtype)
-    if x.dtype == np.float16:
-      self.assertAllClose(jacob_t, jacob_n, rtol=1e-3, atol=1e-3)
-    elif x.dtype == np.float32:
+    if x.dtype in [np.float16, np.float32]:
       self.assertAllClose(jacob_t, jacob_n, rtol=1e-3, atol=1e-3)
     elif x.dtype == np.float64:
       self.assertAllClose(jacob_t, jacob_n, rtol=1e-5, atol=1e-5)
@@ -795,9 +783,7 @@ class MinMaxOpTest(test.TestCase):
       s = list(np.shape(x))
       jacob_t, jacob_n = gradient_checker.compute_gradient(
           inx, s, out, s, x_init_value=x)
-    if x.dtype == np.float16:
-      self.assertAllClose(jacob_t, jacob_n, rtol=1e-3, atol=1e-3)
-    elif x.dtype == np.float32:
+    if x.dtype in [np.float16, np.float32]:
       self.assertAllClose(jacob_t, jacob_n, rtol=1e-3, atol=1e-3)
     elif x.dtype == np.float64:
       self.assertAllClose(jacob_t, jacob_n, rtol=1e-5, atol=1e-5)
@@ -810,9 +796,7 @@ class MinMaxOpTest(test.TestCase):
       s = list(np.shape(x))
       jacob_t, jacob_n = gradient_checker.compute_gradient(
           iny, s, out, s, x_init_value=y)
-    if x.dtype == np.float16:
-      self.assertAllClose(jacob_t, jacob_n, rtol=1e-3, atol=1e-3)
-    elif x.dtype == np.float32:
+    if x.dtype in [np.float16, np.float32]:
       self.assertAllClose(jacob_t, jacob_n, rtol=1e-3, atol=1e-3)
     elif x.dtype == np.float64:
       self.assertAllClose(jacob_t, jacob_n, rtol=1e-5, atol=1e-5)

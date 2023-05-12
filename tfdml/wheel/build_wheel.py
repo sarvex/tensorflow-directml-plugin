@@ -44,7 +44,7 @@ def _copy_dml_redist_files(dst, dml_redist_dir, pix_dir):
             r'^#define DIRECTML_SOURCE_VERSION "([abcdef0-9]+)"',
             dml_config.read(),
             flags=re.MULTILINE,
-        ).group(1)
+        )[1]
         print(f"DML Version = {dml_version}")
 
         if _is_windows():

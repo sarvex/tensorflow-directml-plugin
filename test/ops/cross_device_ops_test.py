@@ -335,10 +335,7 @@ class SingleWorkerCrossDeviceOpsTest(CrossDeviceOpsTestBase):
     devices = ["/gpu:0"]
 
     def mock_get_registered_kernels_for_op(op):
-      if op == "NcclAllReduce":
-        return [object]
-      else:
-        return []
+      return [object] if op == "NcclAllReduce" else []
 
     # Use nccl if nccl kernel is found.
     with test.mock.patch.object(kernels, "get_registered_kernels_for_op",
@@ -497,16 +494,18 @@ class CollectiveAllReduceTest(multi_worker_test_base.MultiWorkerTestBase,
             num_accelerators={"GPU": num_gpus})
         strategy = mwms_lib.CollectiveAllReduceStrategy(
             communication_options=comm_options, cluster_resolver=resolver)
-        return (strategy, devices,
-                "grpc://" + self._cluster_spec[task_type][task_id])
+        return strategy, devices, f"grpc://{self._cluster_spec[task_type][task_id]}"
       else:
         collective_all_reduce_ops = cross_device_ops_lib.CollectiveAllReduce(
             devices=devices,
             group_size=len(devices) * NUM_WORKERS,
             options=comm_options,
             collective_keys=collective_keys)
-        return (collective_all_reduce_ops, devices,
-                "grpc://" + self._cluster_spec[task_type][task_id])
+        return (
+            collective_all_reduce_ops,
+            devices,
+            f"grpc://{self._cluster_spec[task_type][task_id]}",
+        )
 
   def _assert_mirrored_equal(self, left_list, right_list, sess=None):
     if context.executing_eagerly():
@@ -651,8 +650,7 @@ class CollectiveAllReduceTest(multi_worker_test_base.MultiWorkerTestBase,
               vl_indices[idx] if variable_length else indices[idx], dense_shape,
               d))
     if as_per_replica:
-      per_replica = value_lib.PerReplica(indexed_slices)
-      return per_replica
+      return value_lib.PerReplica(indexed_slices)
     else:
       return indexed_slices
 

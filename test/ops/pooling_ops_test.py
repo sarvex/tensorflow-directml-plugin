@@ -40,12 +40,11 @@ from tensorflow.python.platform import tf_logging
 
 
 def GetDeviceScope(self, use_gpu=False):
-  if context.executing_eagerly():
-    if use_gpu and test_util.is_gpu_available():
-      return ops.device("GPU:0")
-    return ops.device("CPU:0")
-  else:
+  if not context.executing_eagerly():
     return self.session(use_gpu=use_gpu)
+  if use_gpu and test_util.is_gpu_available():
+    return ops.device("GPU:0")
+  return ops.device("CPU:0")
 
 
 def GetTestConfigsDicts(v1_fn,
@@ -69,9 +68,10 @@ def GetTestConfigsDicts(v1_fn,
   # (data_format, use_gpu, data_type) tuple
   configs1 = []
   for data_format, use_gpu in configs0:
-    configs1.append((data_format, use_gpu, dtypes.float32))
-    configs1.append((data_format, use_gpu, dtypes.float16))
-
+    configs1.extend((
+        (data_format, use_gpu, dtypes.float32),
+        (data_format, use_gpu, dtypes.float16),
+    ))
   # Convert from tuple to dict and add v1/v2 versions.
   ret = []
   for data_format, use_gpu, data_type in configs1:
@@ -83,21 +83,22 @@ def GetTestConfigsDicts(v1_fn,
         "v2": False
     })
     if v2_fn:
-      ret.append({
-          "pool_func": v2_fn,
-          "data_format": data_format,
-          "data_type": data_type,
-          "use_gpu": use_gpu,
-          "v2": False
-      })
-      ret.append({
-          "pool_func": v2_fn,
-          "data_format": data_format,
-          "data_type": data_type,
-          "use_gpu": use_gpu,
-          "v2": True
-      })
-
+      ret.extend((
+          {
+              "pool_func": v2_fn,
+              "data_format": data_format,
+              "data_type": data_type,
+              "use_gpu": use_gpu,
+              "v2": False,
+          },
+          {
+              "pool_func": v2_fn,
+              "data_format": data_format,
+              "data_type": data_type,
+              "use_gpu": use_gpu,
+              "v2": True,
+          },
+      ))
   # Filter out GPU configs if necessary.
   if not allow_gpu:
     ret = [c for c in ret if not c["use_gpu"]]
@@ -160,9 +161,8 @@ def GetShrunkInceptionMaxPoolShapes(shrink=30):
   for o in output_sizes:
     o[3] //= shrink
   paddings = ["VALID", "VALID", "VALID", "SAME"]
-  for n, i, f, o, s, p in zip(names, input_sizes, filter_sizes, output_sizes,
-                              strides, paddings):
-    yield n, i, f, o, s, p
+  yield from zip(names, input_sizes, filter_sizes, output_sizes, strides,
+                 paddings)
 
 
 @test_util.with_eager_op_as_function
@@ -197,7 +197,7 @@ class PoolingTest(test.TestCase, parameterized.TestCase):
       self.skipTest("No GPU is available.")
 
     if v2 and data_format != "NHWC":
-      self.skipTest("v2 not supported for %s" % data_format)
+      self.skipTest(f"v2 not supported for {data_format}")
     if v2 and not isinstance(padding, str):
       self.skipTest("non-constant ksize/strides requires nonexplicit padding")
 
@@ -1470,12 +1470,11 @@ class PoolingTest(test.TestCase, parameterized.TestCase):
       return pool_func(orig_input, orig_output, grad,
                        [1, window_rows, window_cols, 1],
                        [1, row_stride, col_stride, 1], padding)
-    else:
-      padding, explicit_paddings = nn_ops.convert_padding(padding)
-      return pool_func(orig_input, orig_output, grad,
-                       [1, window_rows, window_cols, 1],
-                       [1, row_stride, col_stride, 1], padding,
-                       explicit_paddings)
+    padding, explicit_paddings = nn_ops.convert_padding(padding)
+    return pool_func(orig_input, orig_output, grad,
+                     [1, window_rows, window_cols, 1],
+                     [1, row_stride, col_stride, 1], padding,
+                     explicit_paddings)
 
   def _testMaxPoolGradDirect(self, input_data, output_backprop,
                              expected_input_backprop, input_sizes, output_sizes,
@@ -2340,12 +2339,21 @@ def GetMaxPoolGradGradTest(input_size, filter_size, output_size, strides,
 if __name__ == "__main__":
   for (name_, input_size_, filter_size_, output_size_, stride_,
        padding_) in GetShrunkInceptionMaxPoolShapes():
-    setattr(PoolingTest, "testMaxPoolFwd_" + name_,
-            GetMaxPoolFwdTest(input_size_, filter_size_, stride_, padding_))
-    setattr(PoolingTest, "testMaxPoolGrad_" + name_,
-            GetMaxPoolGradTest(input_size_, filter_size_, output_size_, stride_,
-                               padding_))
-    setattr(PoolingTest, "testMaxPoolGradGrad_" + name_,
-            GetMaxPoolGradGradTest(input_size_, filter_size_, output_size_,
-                                   stride_, padding_))
+    setattr(
+        PoolingTest,
+        f"testMaxPoolFwd_{name_}",
+        GetMaxPoolFwdTest(input_size_, filter_size_, stride_, padding_),
+    )
+    setattr(
+        PoolingTest,
+        f"testMaxPoolGrad_{name_}",
+        GetMaxPoolGradTest(input_size_, filter_size_, output_size_, stride_,
+                           padding_),
+    )
+    setattr(
+        PoolingTest,
+        f"testMaxPoolGradGrad_{name_}",
+        GetMaxPoolGradGradTest(input_size_, filter_size_, output_size_,
+                               stride_, padding_),
+    )
   test.main()

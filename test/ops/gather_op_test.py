@@ -52,9 +52,7 @@ class GatherTest(test.TestCase, parameterized.TestCase):
     data = data.astype(dtype.as_numpy_dtype)
     # For complex types, add an index-dependent imaginary component so we can
     # tell we got the right value.
-    if dtype.is_complex:
-      return data + 10j * data
-    return data
+    return data + 10j * data if dtype.is_complex else data
 
   def testScalar1D(self):
     with self.cached_session():
